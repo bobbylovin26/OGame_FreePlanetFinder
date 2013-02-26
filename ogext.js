@@ -1,4 +1,4 @@
-Info('ITP OGame Debris Fields Finder Extension [LOADED]');
+Info('ITP OGame Free Planet Finder Extension [LOADED]');
 
 /// GLOBALS ///
 var ogeSolarList;
@@ -11,7 +11,7 @@ var sendingFleet=null;
 var debrisFields=new Array;
 var sandglass={state:true,wait:true};
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-var moduleDomId='OGame Debris Fields Finder Extension';
+var moduleDomId='OGame Free Planet Finder Extension';
 IsModuleLoaded(moduleDomId,true);
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 if(document.location.href.indexOf('page=galaxy')!=-1){
@@ -20,35 +20,50 @@ if(document.location.href.indexOf('page=galaxy')!=-1){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-function GalaxyViewInjection(){
-	var extDiv=document.createElement("div");
-	var tmp;
+function GalaxyViewInjection(){	
+	var HTMLForm = '<form>'
+		+ 'Search solar systems from ' 
+		+ '<input type="text" id="FPF_leftGalaxy" style="width: 30px;" value="10">'
+		+ '<input type="text" id="FPF_leftSS" style="width: 30px;" value="200">'
+		+ 'to'
+		+ '<input type="text" id="FPF_rightGalaxy" style="width: 30px;" value="10">'
+		+ '<input type="text" id="FPF_rightSS" style="width: 30px;" value="210">'
+		+ '<br/>'
+		+ 'Search positions from'
+		+ '<input type="text" id="FPF_closePosition" style="width: 30px;" value="3">'
+		+ 'to'
+		+ '<input type="text" id="FPF_farPosition" style="width: 30px;" value="6">'
+		+ '<br/>'
+		+'<a id="FPF_searchButton">Search</a>'
+		+ '</form>';
 
-	var searchStr=document.getElementById("bar").childNodes[1].childNodes[9].childNodes[0].innerHTML;
-	//var searchStr=document.getElementById("bar").childNodes[0].childNodes[3].childNodes[0].innerHTML;
-	
-	tmp ='<div style="padding:6px;background-color:#22313b;">'
-			+ '<a id="ogeDFFArrow1Left" href="javascript:void(0);" class="ogeArrowLeft" style="background:url('+chrome.extension.getURL('arrows.gif')+')"></a>'
-			+ '<input id="ogeDFFSolarInput" class="ogeDFFSolarInput" maxlength="3" type="text" size="1" value="10" onfocus="clearInput(this.id);" onkeyup="checkIntInput(this.id, 1, 499)" onkeypress="">'
-			+ '<a id="ogeDFFArrow1Right" href="javascript:void(0);" class="ogeArrowRight" style="background:url('+chrome.extension.getURL('arrows.gif')+')"></a>'
-			+ '<span id="ogeDFFInfo" style="float:left;margin:0px 6px;line-height:24px"></span>'
-			+ '<span id="ogeDFFGalaxyWaitButton" bs="true" onclick="var b=!(event.srcElement.getAttribute(\'bs\')===\'true\');event.srcElement.setAttribute(\'bs\',b);if(b){this.style.backgroundPosition=\'0px 0px\'}else{this.style.backgroundPosition=\'-24px 0px\'}" style="background:url('+chrome.extension.getURL('sandglass.gif')+');cursor:pointer;display:block;float:left;width:24px;height:24px"></span>'
-			+ '<a id="ogeDFFGalaxySearchClick" href="javascript:void(0);" class="ogeButton1a" style="margin:0px 6px">' + '<span class="ogeButton1Left" style="background:url('+chrome.extension.getURL('button1-left.gif')+')"></span>' + '<span class="ogeButton1Middle" style="background:url('+chrome.extension.getURL('button1-middle.gif')+')">'+searchStr+'</span>' + '<span class="ogeButton1Right" style="background:url('+chrome.extension.getURL('button1-right.gif')+')"></span>' + '</a>'
-			+ '<span style="line-height:24px;height:24px;">&nbsp</span>'
-			+ '</div>';
+	//TODO: correct this bloc
+	var innerHTML=''
+		+ '<div style="text-align:center;background:url('+chrome.extension.getURL('ressources/newsboxheader.gif')+') no-repeat;height:30px;">'
+		+ '<span class="ogeBoxTitle">'+''+'</span>'
+		+ '</div>'
+		+ '<div id="FPFFormBox" style="padding:10px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+HTMLForm
+		+ '<div id="SFDSendingFleets"></div>'
+		+'</div>'
+		+ '<div style="background: url('+chrome.extension.getURL('ressources/frame_footer.gif')+') no-repeat;height:30px;"></div>';
 			
-	extDiv.innerHTML=tmp;
-	//extDiv.setAttribute("class","");
-	extDiv.setAttribute("style","margin-left:10px;width:650px;background-color:#22313b");
-	var tmp=document.getElementById("galaxyLoading");
-	tmp.parentNode.insertBefore(extDiv,tmp.parentNode.childNodes[2]);
+	var extDiv=document.createElement("div");
+		extDiv.id = "FPFBox"
+		extDiv.setAttribute("style","margin-left:10px;width:650px;background-color:#22313b");
+		extDiv.innerHTML = innerHTML;
 
-	document.getElementById('ogeDFFSolarInput').addEventListener("keyup", GalaxyViewUpdate, false);
+	document.getElementById("inhalt").appendChild(extDiv);
+
+
+	/*var tmp=
+	tmp.parentNode.(extDiv,tmp.parentNode.childNodes[2]);*/
+
+	/*document.getElementById('ogeDFFSolarInput').addEventListener("keyup", GalaxyViewUpdate, false);
 	
 	document.getElementById('ogeDFFArrow1Left').onclick=OGEArrowClick;
 	document.getElementById('ogeDFFArrow1Right').onclick=OGEArrowClick;
-	document.getElementById('ogeDFFGalaxySearchClick').onclick=ogeDFFGalaxySearchClick;
-	GalaxyViewUpdate();
+	document.getElementById('ogeDFFGalaxySearchClick').onclick=ogeDFFGalaxySearchClick;*/
+	//GalaxyViewUpdate();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function GalaxyViewUpdate(){
