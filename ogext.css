@@ -1,5 +1,13 @@
 /* OGame Extension CSS Document */
 
+.FPFTableSSCol {
+	width: 100px; 
+}
+
+.FPFTablePositionCol {
+	width: 40px;
+}
+
 .ogeWindowHeader {
 	color:#6F9FC8;
 	font-family: Verdana, Arial, Helvetica, sans-serif;

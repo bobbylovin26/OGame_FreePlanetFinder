@@ -13,15 +13,14 @@ TODO:
 Info('ITP OGame Free Planet Finder Extension [LOADED]');
 
 /// GLOBALS ///
-var ogeSolarList;
 var stripe=true;
 var ogeDictionary=new Array;
-var availableRecyclers;
+var colonyShipsAvailable = false;
 var slots;
 var slotsUsed;
 var sendingFleet=null;
-var debrisFields=new Array;
-var sandglass={state:true,wait:true};
+var searchRequest;
+var currentSystem;
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 var moduleDomId='OGame Free Planet Finder Extension';
 IsModuleLoaded(moduleDomId,true);
@@ -37,7 +36,7 @@ function GalaxyViewInjection(){
 		+ 'Search solar systems from ' 
 		//TODO get input id = galaxy_input to read the checkIntInput(,,)
 		+ '<input type="text" id="FPF_leftGalaxy" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 10)">'
-		+ '<input type="text" id="FPF_leftSS" class="hideNumberSpin" style="width: 30px;" value="200" onkeyup="checkIntInput(this, 1, 499)">'
+		+ '<input type="text" id="FPF_leftSS" class="hideNumberSpin" style="width: 30px;" value="209" onkeyup="checkIntInput(this, 1, 499)">'
 		+ 'to'
 		+ '<input type="text" id="FPF_rightGalaxy" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 10)">'
 		+ '<input type="text" id="FPF_rightSS"class="hideNumberSpin"  style="width: 30px;" value="210" onkeyup="checkIntInput(this, 1, 499)">'
@@ -47,11 +46,11 @@ function GalaxyViewInjection(){
 		+ 'to'
 		+ '<input type="text" id="FPF_farPosition" class="hideNumberSpin" style="width: 30px;" value="6" onkeyup="checkIntInput(this, 1, 15)">'
 		+ '<br/>'
-		+'<a id="FPF_searchButton">Search</a>'
+		+'<a id="FPF_searchFreePlanetButton">Search</a>'
 		+ '</form>';
 
 	//TODO: correct this bloc
-	var innerHTML=''
+	var innerHTML = ''
 		+ '<div style="text-align:center;background:url('+chrome.extension.getURL('ressources/newsboxheader.gif')+') no-repeat;height:30px;">'
 		+ '<span class="ogeBoxTitle">'+''+'</span>'
 		+ '</div>'
@@ -60,13 +59,14 @@ function GalaxyViewInjection(){
 		+'</div>'
 		+ '<div style="background: url('+chrome.extension.getURL('ressources/frame_footer.gif')+') no-repeat;height:30px;"></div>';
 			
-	var extDiv=document.createElement("div");
+	var extDiv = document.createElement("div");
 		extDiv.id = "FPFBox"
 		extDiv.setAttribute("style","margin-left:10px;width:650px;background-color:#22313b");
 		extDiv.innerHTML = innerHTML;
 
 	document.getElementById("inhalt").appendChild(extDiv);
 
+	document.getElementById('FPF_searchFreePlanetButton').onclick = FPFSearchFreePlanetClicked;
 
 	/*var tmp=
 	tmp.parentNode.(extDiv,tmp.parentNode.childNodes[2]);*/
@@ -79,75 +79,115 @@ function GalaxyViewInjection(){
 	//GalaxyViewUpdate();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-function GalaxyViewUpdate(){
-	var g=GalaxyViewParse();
-	document.getElementById('ogeDFFInfo').innerHTML=g.galaxyStr+': '+g.galaxy+' , '+g.solarStr+': '+g.solarStart+' - '+g.solarEnd;
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function GalaxyViewParse(){
-	var gvp=new Object();
-	gvp.coords=document.getElementsByName('ogame-planet-coordinates')[0].getAttribute('content');
-	gvp.radius=document.getElementById('ogeDFFSolarInput').value;
-	gvp.galaxy=SmartCut(':'+gvp.coords,':',':');
-	gvp.solar=SmartCut(gvp.coords,':',':');
-	gvp.solarStart=gvp.solar*1-gvp.radius*1;
-	gvp.solarEnd=gvp.solar*1+gvp.radius*1;
-	gvp.solarStart=(gvp.solarStart<1)?1:(gvp.solarStart>499)?499:gvp.solarStart;
-	gvp.solarEnd=(gvp.solarEnd<1)?1:(gvp.solarEnd>499)?499:gvp.solarEnd;
-	gvp.galaxyStr=document.getElementById('galaxyscroll').childNodes[1].innerHTML;
-	gvp.solarStr=document.getElementById('solarscroll').childNodes[1].innerHTML;
-	return gvp;
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function ogeDFFGalaxySearchClick(){
-	sandglass.state=sandglass.wait=document.getElementById('ogeDFFGalaxyWaitButton').getAttribute('bs')==='true';
-	var g=GalaxyViewParse();
-	ogeDictionary['galaxy']=g.galaxyStr;
-	ogeDictionary['sendRecyclerTo']=SmartCut(document.body.innerHTML,['case 600:','case 2:','"'],'"');
-	ogeDictionary['fleetOnTheWay']=SmartCut(document.body.innerHTML,['case 600:','case 2:',"'title'","'"],"'");
+function FPFSearchFreePlanetClicked() {
+	console.log('search button clicked');
+
 	slots=parseInt(document.getElementById('slotValue').childNodes[2].nodeValue.match(/\d+/));
 	slotsUsed=parseInt(document.getElementById('slotUsed').innerHTML);
-	availableRecyclers=parseInt(document.getElementById('recyclerValue').innerHTML);
-	
-	InjectDFFView();
-	
-	ogeSolarList=new Array();
-	for(var i=g.solarStart;i<=g.solarEnd;i++)
-		ogeSolarList.push({galaxy:g.galaxy,solar:i});
-		
-	document.getElementById("ogeDFFWait").style.display='inline';
-	DFFSearch('');
+
+	console.log('slots: '+slots);
+	console.log('slots used: '+slotsUsed);
+
+	searchRequest = new Object();
+	searchRequest.leftGalaxy = document.getElementById('FPF_leftGalaxy').value;
+	searchRequest.leftSystem = document.getElementById('FPF_leftSS').value;
+	searchRequest.rightGalaxy = document.getElementById('FPF_rightGalaxy').value;
+	searchRequest.rightSystem = document.getElementById('FPF_rightSS').value;
+	searchRequest.closePosition = document.getElementById('FPF_closePosition').value;
+	searchRequest.farPosition = document.getElementById('FPF_farPosition').value;
+
+	console.log(searchRequest.leftGalaxy);
+
+	currentSystem = new Object();
+	currentSystem.galaxy = searchRequest.leftGalaxy;
+	currentSystem.system = searchRequest.leftSystem;
+
+	injectFPFView();
+
+	FPFSearch();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-function DFFSearch(txt){
+function injectFPFView() {
+	console.log('injectFPFView');
+	var coordsStr=document.getElementById("galaxyheadbg2").childNodes[1].innerHTML; //Planeta
+	console.log('coordsStr: '+coordsStr);
+	colonyShipsAvailable = (document.getElementsByClassName('tooltip planetMoveIcons colonize-active icon').length > 0);
+	//var recyclersStr=document.getElementById("recycler").childNodes[2].nodeValue.replace(/^\s+|\s+$/g,"");
+	var actionStr=document.getElementById("galaxyheadbg2").childNodes[15].innerHTML;
+	console.log("actionStr: "+actionStr);
+
+	var tableHTML = ''
+		+ '<table id="FPFTable" class="ogeTable" cellspacing="0" cellpadding="0" style="margin-top:20px;">'
+			+ '<tr id="FPFTableHeader" class="FPFTableHeader">'
+				+ '<td class="FPFTableSSCol">Solar system</td>';
+	for (var i = 0 ; i < 5 ; i++) {
+		tableHTML += '<td class="FPFTablePositionCol">P'+i+'</td>';
+	}
+		tableHTML += '</tr>'
+		+ '</table>';
+
+		
+	var innerHTML='<div id="planet" style="height:250px;background-image:url('+chrome.extension.getURL('ressources/oge-probe-bg.jpg')+')">'
+	+ '<div id="header_text"><h2>Free Planet Finder</h2></div>'
+	+ '</div>'
+	+ '<div class="c-left" style="position:absolute;top:214px;"></div><div class="c-right" style="position:absolute;top:214px;"></div>'
+	+ '<div style="margin-top:5px;text-align: center;background: url('+chrome.extension.getURL('ressources/frame_header.gif')+') no-repeat;height:30px;">'
+	+ '<div class="ogeWindowHeader">'
+	+ '<span>&nbsp</span>'
+	+ '<img id="ogeDFFWait" style="display: none;" src="'+chrome.extension.getURL('ressources/loading.gif')+'"><span id="ogeDFFProgress"></span>'
+	+ '</div>'
+	+ '<div id="ogeDFFContext" style="padding:20px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+    tableHTML        +'</div>'
+	+ '<div style="background: url('+chrome.extension.getURL('ressources/frame_footer.gif')+') no-repeat;height:30px;"></div>';
+	document.getElementById("inhalt").innerHTML=innerHTML;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function FPFSearch(txt){
 	if(txt!=''){
-		UpdateProgressBar();
-		ParseTxt(ogeSolarList.shift(),txt);
+		//UpdateProgressBar();
+		ParseTxt(currentSystem.galaxy, currentSystem.system, txt);
+		incrementCurrentSystem();
 	}
 	
-	if(ogeSolarList.length>0){
-		var s=ogeSolarList[0];
-		var fd='galaxy='+s.galaxy+'&system='+s.solar;
-		if(sandglass.state&&sandglass.wait){
+	if(FPFShouldContinue()){
+		var fd='galaxy='+currentSystem.galaxy+'&system='+currentSystem.system;
+		/*if(sandglass.state&&sandglass.wait){
 			sandglass.wait=false;
 			setTimeout("DFFSearch('')",500+Math.floor(Math.random()*1000));
 		}else{
-			sandglass.wait=true;
-			PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=galaxyCanLoad&ajax=1",fd,DFFSearchCanLoad);
-		}
+			sandglass.wait=true;*/
+			PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=galaxyCanLoad&ajax=1",fd,FPFSearchCanLoad);
+		//}
 	}else{
-		DFFSearchFinished();
+		FPFSearchFinished();
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-function DFFSearchCanLoad(txt){
+function incrementCurrentSystem() {
+	if (currentSystem.system == 499) {
+		currentSystem.galaxy++;
+		currentSystem.system = 1;
+	} else {
+		currentSystem.system++;
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function FPFShouldContinue() {
+	if (currentSystem.galaxy > searchRequest.rightGalaxy) {
+		return false;
+	} else if (currentSystem.system > searchRequest.rightSystem) {
+		return false;
+	}
+
+	return true;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function FPFSearchCanLoad(txt){
 	eval('var r=new Object('+txt+')');
 	if(r.status){
-		var s=ogeSolarList[0];
-		var fd='galaxy='+s.galaxy+'&system='+s.solar;
-		PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=galaxyContent&ajax=1",fd,DFFSearch);
+		var fd='galaxy='+currentSystem.galaxy+'&system='+currentSystem.system;
+		PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=galaxyContent&ajax=1",fd,FPFSearch);
 	}else{
-		DFFSearchFinished('error');
+		FPFSearchFinished('error');
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -159,9 +199,48 @@ function UpdateProgressBar(){
 	var tmp=document.getElementById("ogeDFFProgress");
 	if(tmp) tmp.innerHTML=ogeSolarList.length;
 }
+function FPFSearchFinished(result){
+	document.getElementById("ogeDFFWait").style.display='none';
+	document.getElementById("ogeDFFProgress").innerHTML='';
+	if(result=='error'){
+		//Info('DFFSearchFinished with error GALAXY CANNOT BE LOAD /deuter/');
+		FPFError();
+	}
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-function ParseTxt(s,txt){
-	var t=txt.match(/id="debris\d+"[\s\S]+?<li><a/g);
+function FPFError(){
+	var errorMessage=SmartCut(document.body.innerHTML,['case 613',"'"],"'"); //deuterium needed
+	var row=document.createElement("tr");
+	row.innerHTML='<td class="ogeCenter" colspan="5">'+errorMessage+'</td>';
+	row.setAttribute("class","ogeTableItem rowRed");
+	document.getElementById("ogeDFFTable").appendChild(row);
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function ParseTxt(galaxy, solar, txt){
+	//console.log(txt);
+
+	var t = document.createElement('div');
+	t.innerHTML = txt;
+	var f = document.createDocumentFragment();
+	f.appendChild(t);
+	var galaxyTable = getElementByIdInFragment(f, 'galaxytable');
+	
+	if (galaxyTable != null) {
+		/*console.log(t2.childNodes);
+		console.log(t2.childNodes[5]);
+		console.log(t2.querySelector('tbody'));*/
+		var tbody = galaxyTable.querySelector('tbody');
+			for (var p = 0 ; p < 16 ; p++) {
+				//console.log(tbody.childNodes[2*p + 1]); //TODO can you do that using jquery?
+
+				console.log('P'+p +': ' + tbody.childNodes[2*p + 1].querySelector('.' + 'planetname' ));
+			}
+	}
+
+
+
+
+	/*var t=txt.match(/id="debris\d+"[\s\S]+?<li><a/g);
 	//Info('match > ',t);
 	if(t){
 		var debrisId;
@@ -186,170 +265,16 @@ function ParseTxt(s,txt){
 		}
 	}else{
 		//Info('NO debris');
-	}
+	}*/
 	
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-function DebrisFieldDisplay(df){
-	var row=document.createElement("tr");
-	row.innerHTML='<td class="ogeCenter">'+df.coord
-		+'</td><td class="ogeRight">'+df.metal
-		+'</td><td class="ogeRight">'+df.crystal
-		+'</td><td class="ogeCenter">'+df.recycler
-		+'</td><td class="ogeCenter">'
-			+'<a title="'+ogeDictionary['galaxy']+': '+df.coord+'" target="_'+df.coord+'" href="'+DocumentLocationFullPathname()+'?page=galaxy&galaxy='+df.galaxy+'&system='+df.solar+'"><img src="'+chrome.extension.getURL('eye.gif')+'"></a>'
-			+'<img title="'+ogeDictionary['sendRecyclerTo']+df.coord+'" style="margin-left:10px;cursor:pointer" src="'+chrome.extension.getURL('recycle.gif')+'" id="ogeSendRec'+df.coord+'">'
-		+'</td>';
-	row.setAttribute("class","ogeTableItem");
-	if(stripe) row.setAttribute("class",row.getAttribute("class")+" rowStripe");
-	stripe=!stripe;
-	document.getElementById("ogeDFFTable").appendChild(row);
-	
-	df.img=document.getElementById("ogeSendRec"+df.coord);
-	df.img.onclick=SendRecyclerOnClick;
-	df.img.ogeDFData=df;
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function SendRecyclerOnClick(sender){
-	
-	if(sendingFleet==null){
-		sendingFleet=sender.srcElement.ogeDFData;
-		sendingFleet.step=1;
-		var img=sendingFleet.img;		
-		sendingFleet.imgOnClick=img.onclick;
-		sendingFleet.imgStyleCursor=img.style.cursor;
-		sendingFleet.imgTitle=img.title;
-		img.onclick=null;
-		img.src=chrome.extension.getURL('loading.gif');
-		img.style.cursor = '';
-		img.title = '';
-		PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1",'',SendRecyclers);
-	}
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function SendRecyclers(response){
-	var txt=SmartCut(response,'<body id="','"');
-	var gsp='galaxy='+sendingFleet.galaxy+'&system='+sendingFleet.solar+'&position='+sendingFleet.planet;
-	switch(txt)
-	{
-	case 'fleet1':
-		if(sendingFleet.step==1){
-			sendingFleet.step++;
-			var fd=gsp+'&type=1&mission=0&speed=10&am209='+sendingFleet.recycler;
-			PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet2",fd,SendRecyclers);			
-		}else{SendRecyclersFailed()}
-	break;
-	case 'fleet2':
-		if(sendingFleet.step==2){
-			sendingFleet.step++;
-			var fd='type=2&mission=0&union=0&am209='+sendingFleet.recycler+'&'+gsp+'&speed=10';
-			PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet3",fd,SendRecyclers);
-		}else{SendRecyclersFailed()}
-	break;
-	case 'fleet3':
-		if(sendingFleet.step==3){
-			var token='&token='+SmartCut(response,["token'","='"],"'");
-			
-			sendingFleet.step++;
-			var fd='holdingtime=1&expeditiontime=1&'+gsp+'&type=2&mission=8&union2=0&holdingOrExpTime=0&speed=10&am209='+sendingFleet.recycler+'&metal=0&crystal=0&deuterium=0';
-			fd+=token;
-			PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=movement",fd,SendRecyclers);
-		}else{SendRecyclersFailed()}
-	break;
-	case 'movement':
-		if((sendingFleet.step==4)&&(response.indexOf('['+sendingFleet.coord+']')!=-1)){
-			SendRecyclersSuccess();
-		}else{SendRecyclersFailed()}
-	break;
-	default:
-		SendRecyclersFailed()
-	}
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function SendRecyclersSuccess(){
-	sendingFleet.img.src=chrome.extension.getURL('fleetyellow.gif');
-	sendingFleet.img.title=ogeDictionary['fleetOnTheWay'];
-	sendingFleet=null;
-	//Info('SendRecyclersSuccess');
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function SendRecyclersFailed(){
-	sendingFleet.img.src=chrome.extension.getURL('recycle-red.gif');
-	sendingFleet.img.onclick=sendingFleet.imgOnClick;
-	sendingFleet.img.style.cursor=sendingFleet.imgStyleCursor;
-	sendingFleet.img.title=sendingFleet.imgTitle;
-	sendingFleet=null;
-	//Info('SendRecyclersFailed');	
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function DFFSearchFinished(result){
-	document.getElementById("ogeDFFWait").style.display='none';
-	document.getElementById("ogeDFFProgress").innerHTML='';
-	if(result=='error'){
-		//Info('DFFSearchFinished with error GALAXY CANNOT BE LOAD /deuter/');
-		DFFError();
-	}
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function DFFError(){
-	var errorMessage=SmartCut(document.body.innerHTML,['case 613',"'"],"'"); //deuterium needed
-	var row=document.createElement("tr");
-	row.innerHTML='<td class="ogeCenter" colspan="5">'+errorMessage+'</td>';
-	row.setAttribute("class","ogeTableItem rowRed");
-	document.getElementById("ogeDFFTable").appendChild(row);
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function InjectDFFView(){
-	var t;
-	var coordsStr=document.getElementById("galaxyheadbg2").childNodes[1].innerHTML; //Planeta
-	//var metalStr=document.getElementById("metal_box").getAttribute('title').match(/^[^:|]+/);
-	//var crystalStr=document.getElementById("crystal_box").getAttribute('title').match(/^[^:|]+/);
-	var metalStr=dict.GetWord('metal');
-	var crystalStr=dict.GetWord('crystal');
-	var recyclersStr=document.getElementById("recycler").childNodes[2].nodeValue.replace(/^\s+|\s+$/g,"");
-	var actionStr=document.getElementById("galaxyheadbg2").childNodes[15].innerHTML;
-
-	var tableHTML='<table id="ogeDFFTable" class="ogeTable" cellspacing="0" cellpadding="0" style="margin-top:20px;">'
-		+ '<tr class="ogeTableItem ogeTableHeader">'
-		+ '<td class="ogeColCrystal">'+coordsStr+'</td><td class="ogeColMetal">'+metalStr+'</td><td class="ogeColCrystal">'+crystalStr+'</td><td class="ogeColCrystal">'+recyclersStr+'</td><td class="ogeColCrystal">'+actionStr+'</td></tr>'
-		+ '</table>';
-
-		
-	t='<div id="planet" style="height:250px;background-image:url('+chrome.extension.getURL('oge-probe-bg.jpg')+')">'
-	+ '<div id="header_text"><h2>Debris Fields Finder</h2></div>'
-	//+ '<div style="position:relative;top:50%;left:80%;"><img src="'+chrome.extension.getURL('wait-big.gif')+'"></div>'
-	+ '</div>'
-	+ '<div class="c-left" style="position:absolute;top:214px;"></div><div class="c-right" style="position:absolute;top:214px;"></div>'
-	+ '<div style="margin-top:5px;text-align: center;background: url('+chrome.extension.getURL('frame_header.gif')+') no-repeat;height:30px;">'
-	+ '<div class="ogeWindowHeader">'
-	//+ '<span>Debris Fields</span>'
-	+ '<span>&nbsp</span>'
-	+ '<img id="ogeDFFWait" style="display: none;" src="'+chrome.extension.getURL('loading.gif')+'"><span id="ogeDFFProgress"></span>'
-	+ '</div>'
-	+ '<div id="ogeDFFContext" style="padding:20px;background: url('+chrome.extension.getURL('frame_body.gif')+') repeat-y;">'+    tableHTML        +'</div>'
-	+ '<div style="background: url('+chrome.extension.getURL('frame_footer.gif')+') no-repeat;height:30px;"></div>';
-	document.getElementById("inhalt").innerHTML=t;
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function OGEArrowClick(sender){
-	switch(sender.srcElement.id)
-	{
-	case 'ogeDFFArrow1Left':
-		document.getElementById('ogeDFFSolarInput').value=parseInt(document.getElementById('ogeDFFSolarInput').value)-1;
-		document.getElementById('ogeDFFSolarInput').onkeyup();
-		GalaxyViewUpdate();
-	break;
-	case 'ogeDFFArrow1Right':
-		document.getElementById('ogeDFFSolarInput').value=parseInt(document.getElementById('ogeDFFSolarInput').value)+1;
-		document.getElementById('ogeDFFSolarInput').onkeyup();
-		GalaxyViewUpdate();
-	break;
-	case 2:
-	//execute code block 2
-	break;
-	default:
-	//code to be executed if n is different from case 1 and 2
-	}
+function getElementByIdInFragment(fragment, id) {
+    if (fragment.querySelector) {
+        return fragment.querySelector('#' + id);
+    } else {
+        return null;
+    }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function Info(text){
@@ -421,3 +346,18 @@ function IsModuleLoaded(_moduleDomId,_add){
 	return result;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+function getElementByAttr(e,attr,value)
+{
+	var tab = [];
+	if (e.getAttribute && e.getAttribute(attr)==value)
+	  tab.push(e);
+ 
+	var n = e.firstChild;
+	if (n==null || typeof n=='undefined') return tab;
+	do
+	{
+	  var tab2 = getElementByAttr(n,attr,value);
+		tab = tab.concat(tab2);
+	}while((n = n.nextSibling)!=null)
+	return tab;
+}
