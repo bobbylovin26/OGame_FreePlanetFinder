@@ -1,3 +1,15 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+TODO:
+	remove all unused objects
+
+*/
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Info('ITP OGame Free Planet Finder Extension [LOADED]');
 
 /// GLOBALS ///
@@ -23,16 +35,17 @@ if(document.location.href.indexOf('page=galaxy')!=-1){
 function GalaxyViewInjection(){	
 	var HTMLForm = '<form>'
 		+ 'Search solar systems from ' 
-		+ '<input type="text" id="FPF_leftGalaxy" style="width: 30px;" value="10">'
-		+ '<input type="text" id="FPF_leftSS" style="width: 30px;" value="200">'
+		//TODO get input id = galaxy_input to read the checkIntInput(,,)
+		+ '<input type="text" id="FPF_leftGalaxy" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 10)">'
+		+ '<input type="text" id="FPF_leftSS" class="hideNumberSpin" style="width: 30px;" value="200" onkeyup="checkIntInput(this, 1, 499)">'
 		+ 'to'
-		+ '<input type="text" id="FPF_rightGalaxy" style="width: 30px;" value="10">'
-		+ '<input type="text" id="FPF_rightSS" style="width: 30px;" value="210">'
+		+ '<input type="text" id="FPF_rightGalaxy" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 10)">'
+		+ '<input type="text" id="FPF_rightSS"class="hideNumberSpin"  style="width: 30px;" value="210" onkeyup="checkIntInput(this, 1, 499)">'
 		+ '<br/>'
 		+ 'Search positions from'
-		+ '<input type="text" id="FPF_closePosition" style="width: 30px;" value="3">'
+		+ '<input type="text" id="FPF_closePosition" class="hideNumberSpin" style="width: 30px;" value="3" onkeyup="checkIntInput(this, 1, 15)">'
 		+ 'to'
-		+ '<input type="text" id="FPF_farPosition" style="width: 30px;" value="6">'
+		+ '<input type="text" id="FPF_farPosition" class="hideNumberSpin" style="width: 30px;" value="6" onkeyup="checkIntInput(this, 1, 15)">'
 		+ '<br/>'
 		+'<a id="FPF_searchButton">Search</a>'
 		+ '</form>';

@@ -8,10 +8,11 @@
    "icons": {
       "128": "ressources/icon128.png"
    },
+    "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDWQxsrrmdpWs5o27e05FFmblcnvX7vbpgCHjAbfFX/gUmMS6mt+yF6G1VQuwEEAHgLwWS0E0IPqpkQ83qq1a8HaHk5yPBAoUVTnwu3lOneH8wElZuKawHTGxhM9yc+NjU5BIDIPtN52pdQL8z4WcC6j8hpxfmS21UhJqQ0FHlZ2QIDAQAB",
    "manifest_version": 2,
    "name": "OGame Free Planet Finder Extension",
    "permissions": [ "http://oge.i4app.com/*" ],
    "update_url": "http://clients2.google.com/service/update2/crx",
-   "version": "0.1",
+   "version": "0.3",
    "web_accessible_resources": [ "*" ]
 }
