@@ -39,16 +39,16 @@ function GalaxyViewInjection(){
 	var HTMLForm = '<form>'
 		+ 'Search solar systems from ' 
 		//TODO get input id = galaxy_input to read the checkIntInput(,,)
-		+ '<input type="text" id="FPF_leftGalaxy" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 10)">'
+		+ '<input type="text" id="FPF_leftGalaxy" class="hideNumberSpin" style="width: 30px;" value="1" onkeyup="checkIntInput(this, 1, 10)">'
 		+ '<input type="text" id="FPF_leftSS" class="hideNumberSpin" style="width: 30px;" value="1" onkeyup="checkIntInput(this, 1, 499)">'
 		+ 'to'
-		+ '<input type="text" id="FPF_rightGalaxy" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 10)">'
-		+ '<input type="text" id="FPF_rightSS"class="hideNumberSpin"  style="width: 30px;" value="2" onkeyup="checkIntInput(this, 1, 499)">'
+		+ '<input type="text" id="FPF_rightGalaxy" class="hideNumberSpin" style="width: 30px;" value="1" onkeyup="checkIntInput(this, 1, 10)">'
+		+ '<input type="text" id="FPF_rightSS" class="hideNumberSpin" style="width: 30px;" value="250" onkeyup="checkIntInput(this, 1, 499)">'
 		+ '<br/>'
 		+ 'Search positions from'
-		+ '<input type="text" id="FPF_closePosition" class="hideNumberSpin" style="width: 30px;" value="1" onkeyup="checkIntInput(this, 1, 15)">'
+		+ '<input type="text" id="FPF_closePosition" class="hideNumberSpin" style="width: 30px;" value="6" onkeyup="checkIntInput(this, 1, 15)">'
 		+ 'to'
-		+ '<input type="text" id="FPF_farPosition" class="hideNumberSpin" style="width: 30px;" value="15" onkeyup="checkIntInput(this, 1, 15)">'
+		+ '<input type="text" id="FPF_farPosition" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 15)">'
 		+ '<br/>'
 		+'<a id="FPF_searchFreePlanetButton">Search</a>'
 		+ '</form>';
@@ -100,11 +100,13 @@ function FPFSearchFreePlanetClicked() {
 	searchRequest.closePosition = document.getElementById('FPF_closePosition').value;
 	searchRequest.farPosition = document.getElementById('FPF_farPosition').value;
 
-	console.log(searchRequest.leftGalaxy);
 
 	currentSystem = new Object();
 	currentSystem.galaxy = searchRequest.leftGalaxy;
 	currentSystem.system = searchRequest.leftSystem;
+
+	console.log(searchRequest.closePosition);
+	console.log(searchRequest.farPosition);	
 
 	injectFPFView();
 
@@ -124,7 +126,7 @@ function injectFPFView() {
 		+ '<table id="FPFTable" class="ogeTable" cellspacing="0" cellpadding="0" style="margin-top:20px;">'
 			+ '<tr id="FPFTableHeader" class="FPFTableHeader">'
 				+ '<td class="FPFTableSSCol">Solar system</td>';
-				for (var i = searchRequest.closePosition ; i <= searchRequest.farPosition ; i++) {
+				for (var i = parseInt(searchRequest.closePosition, 10) ; i <= searchRequest.farPosition ; i++) {
 					tableHTML += '<td class="FPFTablePositionCol">P'+i+'</td>';
 				}
 		tableHTML += '</tr>'
@@ -254,12 +256,12 @@ function ParseTxt(galaxy, solar, txt){
 function printSolarSystem() {
 	var row=document.createElement("tr");
 	HTMLTableRow = ''
-			+ '<td class="FPFTableSSCol>'
+			+ '<td>'
 				+ '<a href="http://uni106.ogame.fr/game/index.php?page=galaxy&galaxy='+currentSystem.galaxy+'&system='+currentSystem.system+'" id="FPFSolarSystem">'
 					+ currentSystem.galaxy+':'+currentSystem.system
 				+ '</a>'
 			+ '</td>';
-	for (var i = searchRequest.closePosition ; i <= searchRequest.farPosition ; i++) {
+	for (var i = parseInt(searchRequest.closePosition, 10) ; i <= searchRequest.farPosition ; i++) {
 		HTMLTableRow += '<td class="FPFTablePositionCol">';
 		if (searchResults[i]) {
 			if (colonyShipsAvailable) {
@@ -271,10 +273,10 @@ function printSolarSystem() {
 		HTMLTableRow += '</td>';
 	}
 	row.innerHTML += HTMLTableRow;
-	row.setAttribute("class", "FPFTableHeader");
+	//row.setAttribute("class", "FPFTableHeader");
 	document.getElementById("FPFTable").appendChild(row);
 
-	for (var i = searchRequest.closePosition ; i <= searchRequest.farPosition ; i++) {
+	for (var i = parseInt(searchRequest.closePosition, 10) ; i <= searchRequest.farPosition ; i++) {
 		if (document.getElementById('FPFSendColoShip_'+currentSystem.galaxy+'_'+currentSystem.system+'_'+i) != null) {
 			var img = document.getElementById('FPFSendColoShip_'+currentSystem.galaxy+'_'+currentSystem.system+'_'+i);
 			img.onclick = FPFSendColoShipClicked;
