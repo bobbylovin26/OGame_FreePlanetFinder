@@ -148,7 +148,6 @@ function injectFPFView() {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function FPFSearch(txt){
-	//console.log(txt);
 	if(txt!=''){
 		UpdateProgressBar();
 		ParseTxt(currentSystem.galaxy, currentSystem.system, txt);
@@ -157,13 +156,7 @@ function FPFSearch(txt){
 	
 	if(FPFShouldContinue()){
 		var fd='galaxy='+currentSystem.galaxy+'&system='+currentSystem.system;
-		/*if(sandglass.state&&sandglass.wait){
-			sandglass.wait=false;
-			setTimeout("DFFSearch('')",500+Math.floor(Math.random()*1000));
-		}else{
-			sandglass.wait=true;*/
-			PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=galaxyCanLoad&ajax=1",fd,FPFSearchCanLoad);
-		//}
+		PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=galaxyCanLoad&ajax=1",fd,FPFSearchCanLoad);
 	}else{
 		FPFSearchFinished();
 	}
@@ -244,7 +237,7 @@ function ParseTxt(galaxy, solar, txt){
 
 	if (galaxyTable != null) {
 		var tbody = galaxyTable.querySelector('tbody');
-			for (var p = searchRequest.closePosition ; p <= searchRequest.farPosition ; p++) {
+			for (var p = parseInt(searchRequest.closePosition, 10) ; p <= searchRequest.farPosition ; p++) {
 				//console.log(tbody.childNodes[2*p + 1]); //TODO can you do that using jquery?
 				searchResults[p] = (tbody.childNodes[2*(p-1) + 1].querySelector('.' + 'planetname' ) == null);
 			}
@@ -254,6 +247,7 @@ function ParseTxt(galaxy, solar, txt){
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function printSolarSystem() {
+	console.log(searchResults);
 	var row=document.createElement("tr");
 	HTMLTableRow = ''
 			+ '<td>'
@@ -286,6 +280,14 @@ function printSolarSystem() {
 		}
 	}
 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/*function setDolumnHidden(colNum, isHidden) {
+   var tbl = document.getElementById('FPFTable');
+   var col = tbl.getElementsByTagName('FPFTableColP')[col_no];
+   if (col) {
+     col.style.visibility=do_show?"":"collapse";
+   }
+}*/
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function FPFSendColoShipClicked(sender) {
 	console.log(sender.srcElement.galaxy);
