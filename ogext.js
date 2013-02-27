@@ -21,6 +21,10 @@ var slotsUsed;
 var sendingFleet=null;
 var searchRequest;
 var currentSystem;
+var searchResults = new Array();
+var sendingFleet = null;
+/*searchResults.push(undefined);
+for (var i = 1 ; i < 16 ; i++) {searchResults.push(false);}*/
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 var moduleDomId='OGame Free Planet Finder Extension';
 IsModuleLoaded(moduleDomId,true);
@@ -36,15 +40,15 @@ function GalaxyViewInjection(){
 		+ 'Search solar systems from ' 
 		//TODO get input id = galaxy_input to read the checkIntInput(,,)
 		+ '<input type="text" id="FPF_leftGalaxy" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 10)">'
-		+ '<input type="text" id="FPF_leftSS" class="hideNumberSpin" style="width: 30px;" value="209" onkeyup="checkIntInput(this, 1, 499)">'
+		+ '<input type="text" id="FPF_leftSS" class="hideNumberSpin" style="width: 30px;" value="1" onkeyup="checkIntInput(this, 1, 499)">'
 		+ 'to'
 		+ '<input type="text" id="FPF_rightGalaxy" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 10)">'
-		+ '<input type="text" id="FPF_rightSS"class="hideNumberSpin"  style="width: 30px;" value="210" onkeyup="checkIntInput(this, 1, 499)">'
+		+ '<input type="text" id="FPF_rightSS"class="hideNumberSpin"  style="width: 30px;" value="2" onkeyup="checkIntInput(this, 1, 499)">'
 		+ '<br/>'
 		+ 'Search positions from'
-		+ '<input type="text" id="FPF_closePosition" class="hideNumberSpin" style="width: 30px;" value="3" onkeyup="checkIntInput(this, 1, 15)">'
+		+ '<input type="text" id="FPF_closePosition" class="hideNumberSpin" style="width: 30px;" value="1" onkeyup="checkIntInput(this, 1, 15)">'
 		+ 'to'
-		+ '<input type="text" id="FPF_farPosition" class="hideNumberSpin" style="width: 30px;" value="6" onkeyup="checkIntInput(this, 1, 15)">'
+		+ '<input type="text" id="FPF_farPosition" class="hideNumberSpin" style="width: 30px;" value="15" onkeyup="checkIntInput(this, 1, 15)">'
 		+ '<br/>'
 		+'<a id="FPF_searchFreePlanetButton">Search</a>'
 		+ '</form>';
@@ -104,25 +108,25 @@ function FPFSearchFreePlanetClicked() {
 
 	injectFPFView();
 
-	FPFSearch();
+	document.getElementById("FPFLoadingImg").style.display='inline';
+
+	FPFSearch('');
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function injectFPFView() {
 	console.log('injectFPFView');
 	var coordsStr=document.getElementById("galaxyheadbg2").childNodes[1].innerHTML; //Planeta
-	console.log('coordsStr: '+coordsStr);
 	colonyShipsAvailable = (document.getElementsByClassName('tooltip planetMoveIcons colonize-active icon').length > 0);
 	//var recyclersStr=document.getElementById("recycler").childNodes[2].nodeValue.replace(/^\s+|\s+$/g,"");
 	var actionStr=document.getElementById("galaxyheadbg2").childNodes[15].innerHTML;
-	console.log("actionStr: "+actionStr);
 
 	var tableHTML = ''
 		+ '<table id="FPFTable" class="ogeTable" cellspacing="0" cellpadding="0" style="margin-top:20px;">'
 			+ '<tr id="FPFTableHeader" class="FPFTableHeader">'
 				+ '<td class="FPFTableSSCol">Solar system</td>';
-	for (var i = 0 ; i < 5 ; i++) {
-		tableHTML += '<td class="FPFTablePositionCol">P'+i+'</td>';
-	}
+				for (var i = searchRequest.closePosition ; i <= searchRequest.farPosition ; i++) {
+					tableHTML += '<td class="FPFTablePositionCol">P'+i+'</td>';
+				}
 		tableHTML += '</tr>'
 		+ '</table>';
 
@@ -134,7 +138,7 @@ function injectFPFView() {
 	+ '<div style="margin-top:5px;text-align: center;background: url('+chrome.extension.getURL('ressources/frame_header.gif')+') no-repeat;height:30px;">'
 	+ '<div class="ogeWindowHeader">'
 	+ '<span>&nbsp</span>'
-	+ '<img id="ogeDFFWait" style="display: none;" src="'+chrome.extension.getURL('ressources/loading.gif')+'"><span id="ogeDFFProgress"></span>'
+	+ '<img id="FPFLoadingImg" style="display: none;" src="'+chrome.extension.getURL('ressources/loading.gif')+'"><span id="FPFRemainingSystems"></span>'
 	+ '</div>'
 	+ '<div id="ogeDFFContext" style="padding:20px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+    tableHTML        +'</div>'
 	+ '<div style="background: url('+chrome.extension.getURL('ressources/frame_footer.gif')+') no-repeat;height:30px;"></div>';
@@ -142,8 +146,9 @@ function injectFPFView() {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function FPFSearch(txt){
+	//console.log(txt);
 	if(txt!=''){
-		//UpdateProgressBar();
+		UpdateProgressBar();
 		ParseTxt(currentSystem.galaxy, currentSystem.system, txt);
 		incrementCurrentSystem();
 	}
@@ -172,13 +177,25 @@ function incrementCurrentSystem() {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function FPFShouldContinue() {
-	if (currentSystem.galaxy > searchRequest.rightGalaxy) {
+	if (parseInt(currentSystem.galaxy, 10) > parseInt(searchRequest.rightGalaxy, 10)) { //had to add parseInt for the chrome not to think it's a string...
 		return false;
-	} else if (currentSystem.system > searchRequest.rightSystem) {
+	} else if (currentSystem.galaxy == searchRequest.rightGalaxy
+				&& currentSystem.system > searchRequest.rightSystem) {
 		return false;
 	}
 
 	return true;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function getSystemRemainingCount() {
+	//correct count when galaxies are differents
+	if (currentSystem.galaxy == searchRequest.rightGalaxy) {
+		return searchRequest.rightSystem - currentSystem.system;
+	} else {
+		return Math.max(0, searchRequest.rightGalaxy - currentSystem.galaxy - 1) * 499 
+				+ parseInt(500 - currentSystem.system, 10)
+				+ parseInt(searchRequest.rightSystem, 10);
+	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function FPFSearchCanLoad(txt){
@@ -196,12 +213,12 @@ function DocumentLocationFullPathname(){
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function UpdateProgressBar(){
-	var tmp=document.getElementById("ogeDFFProgress");
-	if(tmp) tmp.innerHTML=ogeSolarList.length;
+	var tmp=document.getElementById("FPFRemainingSystems");
+	if(tmp) tmp.innerHTML=getSystemRemainingCount();
 }
 function FPFSearchFinished(result){
-	document.getElementById("ogeDFFWait").style.display='none';
-	document.getElementById("ogeDFFProgress").innerHTML='';
+	document.getElementById("FPFLoadingImg").style.display='none';
+	document.getElementById("FPFRemainingSystems").innerHTML='';
 	if(result=='error'){
 		//Info('DFFSearchFinished with error GALAXY CANNOT BE LOAD /deuter/');
 		FPFError();
@@ -217,56 +234,136 @@ function FPFError(){
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function ParseTxt(galaxy, solar, txt){
-	//console.log(txt);
-
 	var t = document.createElement('div');
 	t.innerHTML = txt;
 	var f = document.createDocumentFragment();
 	f.appendChild(t);
 	var galaxyTable = getElementByIdInFragment(f, 'galaxytable');
-	
-	if (galaxyTable != null) {
-		/*console.log(t2.childNodes);
-		console.log(t2.childNodes[5]);
-		console.log(t2.querySelector('tbody'));*/
-		var tbody = galaxyTable.querySelector('tbody');
-			for (var p = 0 ; p < 16 ; p++) {
-				//console.log(tbody.childNodes[2*p + 1]); //TODO can you do that using jquery?
 
-				console.log('P'+p +': ' + tbody.childNodes[2*p + 1].querySelector('.' + 'planetname' ));
+	if (galaxyTable != null) {
+		var tbody = galaxyTable.querySelector('tbody');
+			for (var p = searchRequest.closePosition ; p <= searchRequest.farPosition ; p++) {
+				//console.log(tbody.childNodes[2*p + 1]); //TODO can you do that using jquery?
+				searchResults[p] = (tbody.childNodes[2*(p-1) + 1].querySelector('.' + 'planetname' ) == null);
 			}
 	}
 
+	printSolarSystem();	
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function printSolarSystem() {
+	var row=document.createElement("tr");
+	HTMLTableRow = ''
+			+ '<td class="FPFTableSSCol>'
+				+ '<a href="http://uni106.ogame.fr/game/index.php?page=galaxy&galaxy='+currentSystem.galaxy+'&system='+currentSystem.system+'" id="FPFSolarSystem">'
+					+ currentSystem.galaxy+':'+currentSystem.system
+				+ '</a>'
+			+ '</td>';
+	for (var i = searchRequest.closePosition ; i <= searchRequest.farPosition ; i++) {
+		HTMLTableRow += '<td class="FPFTablePositionCol">';
+		if (searchResults[i]) {
+			if (colonyShipsAvailable) {
+				HTMLTableRow += '<img id="FPFSendColoShip_'+currentSystem.galaxy+'_'+currentSystem.system+'_'+i+'" src="'+chrome.extension.getURL('ressources/colonisationPossible.png')+'"/>';
+			} else {
+				HTMLTableRow += '<img src="'+chrome.extension.getURL('ressources/colonisationImpossible.png')+'"/>';
+			}
+		}  
+		HTMLTableRow += '</td>';
+	}
+	row.innerHTML += HTMLTableRow;
+	row.setAttribute("class", "FPFTableHeader");
+	document.getElementById("FPFTable").appendChild(row);
 
-
-
-	/*var t=txt.match(/id="debris\d+"[\s\S]+?<li><a/g);
-	//Info('match > ',t);
-	if(t){
-		var debrisId;
-		var crystal;
-		var metal;
-		var recycler;
-		//var greenDerbisURL=chrome.extension.getURL('derbis-green.gif');
-		for(var i=0;i<t.length;i++){
-			debrisId=SmartCut(t[i],'id="debris','"');
-			metal=SmartCut(t[i],['debris-content',':'],'<');
-			crystal=SmartCut(t[i],['debris-content','debris-content',':'],'<');
-			recycler=SmartCut(t[i],['debris-recyclers">',':'],'<');
-			s.planet=debrisId;
-			s.coord=s.galaxy+':'+s.solar+':'+s.planet;
-			s.metal=metal;
-			s.crystal=crystal;
-			s.recycler=recycler;
-			
-			var newObj=JSON.parse(JSON.stringify(s));
-			debrisFields.push(newObj);
-			DebrisFieldDisplay(newObj);
+	for (var i = searchRequest.closePosition ; i <= searchRequest.farPosition ; i++) {
+		if (document.getElementById('FPFSendColoShip_'+currentSystem.galaxy+'_'+currentSystem.system+'_'+i) != null) {
+			var img = document.getElementById('FPFSendColoShip_'+currentSystem.galaxy+'_'+currentSystem.system+'_'+i);
+			img.onclick = FPFSendColoShipClicked;
+			img.galaxy = currentSystem.galaxy;
+			img.system = currentSystem.system;
+			img.position = i;
 		}
-	}else{
-		//Info('NO debris');
-	}*/
-	
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function FPFSendColoShipClicked(sender) {
+	console.log(sender.srcElement.galaxy);
+	console.log(sender.srcElement.system);
+	console.log(sender.srcElement.position);
+
+	if (sendingFleet == null) {
+		sendingFleet = new Object();
+		sendingFleet.step = 1;
+		sendingFleet.img = sender.srcElement;
+		sendingFleet.galaxyDest = sender.srcElement.galaxy;
+		sendingFleet.systemDest = sender.srcElement.system;
+		sendingFleet.planetDest = sender.srcElement.position;
+
+		sendingFleet.img.src = chrome.extension.getURL('ressources/loading.gif');
+		PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1",'',SendColonyShip);
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function SendColonyShip(response) {
+	var txt=SmartCut(response,'<body id="','"');
+	var gsp='galaxy='+sendingFleet.galaxyDest+'&system='+sendingFleet.systemDest+'&position='+sendingFleet.planetDest; // target???
+	console.log('step ' + sendingFleet.step);
+	switch(txt)
+	{
+	case 'fleet1':
+		if(sendingFleet.step==1){
+			sendingFleet.step++;
+			var fd=gsp+'&type=1&mission=0&speed=10&am208=1';
+			PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet2",fd,SendColonyShip);			
+		}else{SendColonyShipsFailed()}
+	break;
+	case 'fleet2':
+		if(sendingFleet.step==2){
+			sendingFleet.step++;
+			var fd='type=1&mission=0&union=0&am208=1&'+gsp+'&speed=10';
+			PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet3",fd,SendColonyShip);
+		}else{SendColonyShipsFailed()}
+	break;
+	case 'fleet3':
+		if(sendingFleet.step==3){
+			var token='&token='+SmartCut(response,["token'","='"],"'");
+			
+			sendingFleet.step++;
+			var fd='holdingtime=1&expeditiontime=1&'+gsp+'&type=1&mission=7&union2=0&holdingOrExpTime=0&speed=10&am208=1&metal=0&crystal=0&deuterium=0';
+			fd+=token;
+			PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=movement",fd,SendColonyShip);
+		}else{SendColonyShipsFailed()}
+	break;
+	case 'movement':
+		if((sendingFleet.step==4)/*&&(response.indexOf('['+sendingFleet.coord+']')!=-1)*/){
+			SendColonyShipsSuccess();
+		}else{SendColonyShipsFailed()}
+	break;
+	default:
+		SendColonyShipsFailed()
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function SendColonyShipsSuccess(){
+	console.log('send succes');
+	sendingFleet.img.src = chrome.extension.getURL('ressources/colonisationSuccess.png');
+	//PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){}); ???
+
+	sendingFleet = null;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function SendColonyShipsFailed(){
+	console.log('send failed');
+	sendingFleet.img.src = chrome.extension.getURL('ressources/colonisationFail.png');
+	//PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){}); ???
+
+	sendingFleet = null;
+
+	/*sendingFleet.img.src=chrome.extension.getURL('recycle-red.gif');
+	sendingFleet.img.onclick=sendingFleet.imgOnClick;
+	sendingFleet.img.style.cursor=sendingFleet.imgStyleCursor;
+	sendingFleet.img.title=sendingFleet.imgTitle;
+	sendingFleet=null;*/
+	//Info('SendRecyclersFailed');	
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function getElementByIdInFragment(fragment, id) {
