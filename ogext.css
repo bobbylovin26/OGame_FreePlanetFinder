@@ -1,133 +1,60 @@
 /* OGame Extension CSS Document */
 
+/* --- FORM ---*/
+.FPF_form {
+	margin: 10px;
+	line-height: 30px;
+}
+
+.FPFSmallNumberInput {
+	margin: 2px;
+	width: 25px;
+	text-align: center;
+}
+
+.FPFLaunchButton {
+	text-transform: uppercase;
+	font-size: 12px;
+	font-weight: bold;
+	color:#fff;
+	display:block;
+	width: 102px;
+	height: 38px;
+	line-height: 38px;	
+	text-align: center;
+	float: right;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+
+/* --- result table --- */
+.FPFTable {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.FPFTableHeader td{
+	height: 26px;
+	font-weight: bold;
+
+	border-bottom: 1px solid #3F4E61;
+	background-color: #13181D;
+	color: #848484;
+	font-size: 12px;
+}
+
 .FPFTableSSCol {
 	width: 100px; 
+	height: 22px;
+	color: #848484;
+	font-size: 12px;
+	font-weight: bold;
 }
 
 .FPFTablePositionCol {
 	width: 40px;
 }
-
-.ogeWindowHeader {
-	color:#6F9FC8;
-	font-family: Verdana, Arial, Helvetica, sans-serif;
-	font-weight: bold;
-	position:relative;
-	top:7px;
-}
-
-.ogeButton1a {
-	text-decoration: none;
-	color:#ffffff !important;
-	line-height:24px;
-	height:24px;
-	display:block;
-	float:left;		
-}
-.ogeButton1a:hover {
-	color:#99CC00 !important;
-}
-
-.ogeButton1Left {
-	width:2px;
-	height:24px;
-	float:left;
-}
-.ogeButton1Middle {
-	height:24px;
-	float:left;
-	padding: 0px 8px;
-	line-height:24px;
-}
-.ogeButton1Right {
-	width:14px;
-	height:24px;
-	float:left;
-}
-
-.ogeDFFSolarInput {
-background-color: black;
-color: white;
-cursor: auto;
-display: block;
-float: left;
-font-family: Arial;
-font-size: 12px;
-font-style: normal;
-font-variant: normal;
-font-weight: bold;
-height: 20px;
-letter-spacing: normal;
-padding-top: 4px;
-position: static;
-text-align: center;
-text-indent: 0px;
-text-shadow: none;
-text-transform: none;
-width: 30px;
-word-spacing: 0px;
-}
-
-.ogeArrowLeft {
-height:24px !important;
-width:25px !important;
-background-position: 0px -24px !important;
-background-attachment: scroll !important;
-float: left;
-background-color:#000000 !important;
-}
-
-.ogeArrowLeft:hover {
-background-position-x: -50px !important;
-}
-
-.ogeArrowRight {
-height:24px !important;
-width:25px !important;
-background-position: 0px 0px !important;
-background-attachment: scroll !important;
-float: left;
-}
-
-.ogeArrowRight:hover {
-background-position-x: -50px !important;
-}
-
-.ogeTable {
-display: block !important;
-width:600px !important;
-margin: 0 auto !important;
-}
-
-.ogeColPlanet { width: 200px; }
-.ogeColMetal, .ogeColCrystal, .ogeColDeuter{ width: 133px !important; text-align: center !important; }
-.ogeRight {text-align: right !important;}
-.ogeLeft {text-align: left !important;}
-.ogeCenter {text-align: center !important;}
-.ogeUnderline td{ border-bottom: 1px solid #3F4E61 !important; }
-.ogeUpperline td{ border-top: 1px solid #3F4E61 !important; }
-.ogeLeftline { border-left: 1px solid #3F4E61 !important; }
-
-.ogeTableHeader td{
-border-bottom: 1px solid #3F4E61 !important;
-background-color: #13181D !important;
-color: #6F9FC8 !important;
-font-size: 12px !important;
-}
-
-.ogeTableItem, .ogeTableItem, .ogeTableItem td{
-color: #848484 !important;
-font-family: Verdana, Arial, SunSans-Regular, sans-serif !important;
-font-size: 11px !important;
-font-style: normal !important;
-font-variant: normal !important;
-font-weight: bold !important;
-height: 26px !important;
-/*text-align: left;*/
-vertical-align: middle !important;
-}
-
-
 
 .rowStripe{ background-color: #13181D;}
 .rowRed td{ 

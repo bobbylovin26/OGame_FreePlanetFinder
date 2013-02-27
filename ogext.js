@@ -23,6 +23,7 @@ var searchRequest;
 var currentSystem;
 var searchResults = new Array();
 var sendingFleet = null;
+var stripe = true;
 /*searchResults.push(undefined);
 for (var i = 1 ; i < 16 ; i++) {searchResults.push(false);}*/
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,27 +37,27 @@ if(document.location.href.indexOf('page=galaxy')!=-1){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function GalaxyViewInjection(){	
-	var HTMLForm = '<form>'
+	var HTMLForm = '<form class="FPF_form">'
 		+ 'Search solar systems from ' 
 		//TODO get input id = galaxy_input to read the checkIntInput(,,)
-		+ '<input type="text" id="FPF_leftGalaxy" class="hideNumberSpin" style="width: 30px;" value="1" onkeyup="checkIntInput(this, 1, 10)">'
-		+ '<input type="text" id="FPF_leftSS" class="hideNumberSpin" style="width: 30px;" value="1" onkeyup="checkIntInput(this, 1, 499)">'
+		+ '<input type="text" id="FPF_leftGalaxy" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 10)">'
+		+ '<input type="text" id="FPF_leftSS" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 499)">'
 		+ 'to'
-		+ '<input type="text" id="FPF_rightGalaxy" class="hideNumberSpin" style="width: 30px;" value="1" onkeyup="checkIntInput(this, 1, 10)">'
-		+ '<input type="text" id="FPF_rightSS" class="hideNumberSpin" style="width: 30px;" value="250" onkeyup="checkIntInput(this, 1, 499)">'
+		+ '<input type="text" id="FPF_rightGalaxy" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 10)">'
+		+ '<input type="text" id="FPF_rightSS" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 499)">'
 		+ '<br/>'
 		+ 'Search positions from'
-		+ '<input type="text" id="FPF_closePosition" class="hideNumberSpin" style="width: 30px;" value="6" onkeyup="checkIntInput(this, 1, 15)">'
+		+ '<input type="text" id="FPF_closePosition" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 15)">'
 		+ 'to'
-		+ '<input type="text" id="FPF_farPosition" class="hideNumberSpin" style="width: 30px;" value="10" onkeyup="checkIntInput(this, 1, 15)">'
+		+ '<input type="text" id="FPF_farPosition" class="FPFSmallNumberInput" value="15" onkeyup="checkIntInput(this, 1, 15)">'
 		+ '<br/>'
-		+'<a id="FPF_searchFreePlanetButton">Search</a>'
+		+ '<a id="FPF_searchFreePlanetButton" class="FPFLaunchButton" style="background-image: url('+chrome.extension.getURL('ressources/greenButton.png')+'"")>Search</a>'
 		+ '</form>';
 
 	//TODO: correct this bloc
 	var innerHTML = ''
 		+ '<div style="text-align:center;background:url('+chrome.extension.getURL('ressources/newsboxheader.gif')+') no-repeat;height:30px;">'
-		+ '<span class="ogeBoxTitle">'+''+'</span>'
+		+ '<span class="ogeBoxTitle">'+'Free Planete Finder'+'</span>'
 		+ '</div>'
 		+ '<div id="FPFFormBox" style="padding:10px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+HTMLForm
 		+ '<div id="SFDSendingFleets"></div>'
@@ -70,22 +71,13 @@ function GalaxyViewInjection(){
 
 	document.getElementById("inhalt").appendChild(extDiv);
 
+	var button = document.getElementById('FPF_searchFreePlanetButton');
+	document.getElementById('FPF_searchFreePlanetButton').style.backgroundImage = 'url("'+ chrome.extension.getURL('ressources/greenButton.png')+'")';
+
 	document.getElementById('FPF_searchFreePlanetButton').onclick = FPFSearchFreePlanetClicked;
-
-	/*var tmp=
-	tmp.parentNode.(extDiv,tmp.parentNode.childNodes[2]);*/
-
-	/*document.getElementById('ogeDFFSolarInput').addEventListener("keyup", GalaxyViewUpdate, false);
-	
-	document.getElementById('ogeDFFArrow1Left').onclick=OGEArrowClick;
-	document.getElementById('ogeDFFArrow1Right').onclick=OGEArrowClick;
-	document.getElementById('ogeDFFGalaxySearchClick').onclick=ogeDFFGalaxySearchClick;*/
-	//GalaxyViewUpdate();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function FPFSearchFreePlanetClicked() {
-	console.log('search button clicked');
-
 	slots=parseInt(document.getElementById('slotValue').childNodes[2].nodeValue.match(/\d+/));
 	slotsUsed=parseInt(document.getElementById('slotUsed').innerHTML);
 
@@ -105,9 +97,6 @@ function FPFSearchFreePlanetClicked() {
 	currentSystem.galaxy = searchRequest.leftGalaxy;
 	currentSystem.system = searchRequest.leftSystem;
 
-	console.log(searchRequest.closePosition);
-	console.log(searchRequest.farPosition);	
-
 	injectFPFView();
 
 	document.getElementById("FPFLoadingImg").style.display='inline';
@@ -116,14 +105,13 @@ function FPFSearchFreePlanetClicked() {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function injectFPFView() {
-	console.log('injectFPFView');
 	var coordsStr=document.getElementById("galaxyheadbg2").childNodes[1].innerHTML; //Planeta
 	colonyShipsAvailable = (document.getElementsByClassName('tooltip planetMoveIcons colonize-active icon').length > 0);
 	//var recyclersStr=document.getElementById("recycler").childNodes[2].nodeValue.replace(/^\s+|\s+$/g,"");
 	var actionStr=document.getElementById("galaxyheadbg2").childNodes[15].innerHTML;
 
 	var tableHTML = ''
-		+ '<table id="FPFTable" class="ogeTable" cellspacing="0" cellpadding="0" style="margin-top:20px;">'
+		+ '<table id="FPFTable" class="FPFTable" cellspacing="0" cellpadding="0" style="margin-top:10px;">'
 			+ '<tr id="FPFTableHeader" class="FPFTableHeader">'
 				+ '<td class="FPFTableSSCol">Solar system</td>';
 				for (var i = parseInt(searchRequest.closePosition, 10) ; i <= searchRequest.farPosition ; i++) {
@@ -213,7 +201,7 @@ function UpdateProgressBar(){
 }
 function FPFSearchFinished(result){
 	document.getElementById("FPFLoadingImg").style.display='none';
-	document.getElementById("FPFRemainingSystems").innerHTML='';
+	document.getElementById("FPFRemainingSystems").innerHTML='Free Planet Finder';
 	if(result=='error'){
 		//Info('DFFSearchFinished with error GALAXY CANNOT BE LOAD /deuter/');
 		FPFError();
@@ -247,27 +235,30 @@ function ParseTxt(galaxy, solar, txt){
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function printSolarSystem() {
-	console.log(searchResults);
 	var row=document.createElement("tr");
 	HTMLTableRow = ''
-			+ '<td>'
-				+ '<a href="http://uni106.ogame.fr/game/index.php?page=galaxy&galaxy='+currentSystem.galaxy+'&system='+currentSystem.system+'" id="FPFSolarSystem">'
-					+ currentSystem.galaxy+':'+currentSystem.system
+			+ '<td class="FPFTableSSCol">'
+				+ currentSystem.galaxy+':'+currentSystem.system+':x    '
+				+ '<a title="System '+currentSystem.galaxy+':'+currentSystem.system+'"'
+					+' href="http://uni106.ogame.fr/game/index.php?page=galaxy&galaxy='+currentSystem.galaxy+'&system='+currentSystem.system+'" id="FPFSolarSystem">'
+					+ '<img title id="FPFShowSystem_'+currentSystem.galaxy+'_'+currentSystem.system+'" src="'+chrome.extension.getURL('ressources/eye.gif')+'"/>'
 				+ '</a>'
 			+ '</td>';
 	for (var i = parseInt(searchRequest.closePosition, 10) ; i <= searchRequest.farPosition ; i++) {
 		HTMLTableRow += '<td class="FPFTablePositionCol">';
 		if (searchResults[i]) {
 			if (colonyShipsAvailable) {
-				HTMLTableRow += '<img id="FPFSendColoShip_'+currentSystem.galaxy+'_'+currentSystem.system+'_'+i+'" src="'+chrome.extension.getURL('ressources/colonisationPossible.png')+'"/>';
+				HTMLTableRow += '<img title="Send colony ship to '+currentSystem.galaxy+':'+currentSystem.system+':'+i+'" '
+						+ 'id="FPFSendColoShip_'+currentSystem.galaxy+'_'+currentSystem.system+'_'+i+'" src="'+chrome.extension.getURL('ressources/colonisationPossible.png')+'"/>';
 			} else {
-				HTMLTableRow += '<img src="'+chrome.extension.getURL('ressources/colonisationImpossible.png')+'"/>';
+				HTMLTableRow += '<img title="No colony ship available" src="'+chrome.extension.getURL('ressources/colonisationImpossible.png')+'"/>';
 			}
 		}  
 		HTMLTableRow += '</td>';
 	}
 	row.innerHTML += HTMLTableRow;
-	//row.setAttribute("class", "FPFTableHeader");
+	if(stripe) row.setAttribute("class",row.getAttribute("class")+" rowStripe");
+	stripe=!stripe;
 	document.getElementById("FPFTable").appendChild(row);
 
 	for (var i = parseInt(searchRequest.closePosition, 10) ; i <= searchRequest.farPosition ; i++) {
@@ -281,19 +272,7 @@ function printSolarSystem() {
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-/*function setDolumnHidden(colNum, isHidden) {
-   var tbl = document.getElementById('FPFTable');
-   var col = tbl.getElementsByTagName('FPFTableColP')[col_no];
-   if (col) {
-     col.style.visibility=do_show?"":"collapse";
-   }
-}*/
-//////////////////////////////////////////////////////////////////////////////////////////////////////
 function FPFSendColoShipClicked(sender) {
-	console.log(sender.srcElement.galaxy);
-	console.log(sender.srcElement.system);
-	console.log(sender.srcElement.position);
-
 	if (sendingFleet == null) {
 		sendingFleet = new Object();
 		sendingFleet.step = 1;
@@ -310,7 +289,6 @@ function FPFSendColoShipClicked(sender) {
 function SendColonyShip(response) {
 	var txt=SmartCut(response,'<body id="','"');
 	var gsp='galaxy='+sendingFleet.galaxyDest+'&system='+sendingFleet.systemDest+'&position='+sendingFleet.planetDest; // target???
-	console.log('step ' + sendingFleet.step);
 	switch(txt)
 	{
 	case 'fleet1':
@@ -348,7 +326,6 @@ function SendColonyShip(response) {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function SendColonyShipsSuccess(){
-	console.log('send succes');
 	sendingFleet.img.src = chrome.extension.getURL('ressources/colonisationSuccess.png');
 	//PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){}); ???
 
@@ -356,7 +333,6 @@ function SendColonyShipsSuccess(){
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function SendColonyShipsFailed(){
-	console.log('send failed');
 	sendingFleet.img.src = chrome.extension.getURL('ressources/colonisationFail.png');
 	//PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){}); ???
 
