@@ -229,7 +229,8 @@ function injectFPFView() {
 	+ '<div style="margin-top:5px;text-align: center;background: url('+chrome.extension.getURL('ressources/frame_header.gif')+') no-repeat;height:30px;">'
 	+ '<div class="ogeWindowHeader">'
 	+ '<span>&nbsp</span>'
-	+ '<img id="FPFLoadingImg" style="display: none;" src="'+chrome.extension.getURL('ressources/loading.gif')+'"><span id="FPFRemainingSystems"></span>'
+	+ '<img id="FPFLoadingImg" style="display: none;" src="'+chrome.extension.getURL('ressources/loading.gif')+'">'
+	+ '<span id="FPFRemainingSystems">'+getSystemDistance(currentSystem.galaxy, currentSystem.system, searchRequest.rightGalaxy, searchRequest.rightSystem)+'</span>'
 	+ '</div>'
 	+ '<div id="ogeDFFContext" style="padding:20px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+    tableHTML        +'</div>'
 	+ '<div style="background: url('+chrome.extension.getURL('ressources/frame_footer.gif')+') no-repeat;height:30px;"></div>';
@@ -313,7 +314,7 @@ function DocumentLocationFullPathname(){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function UpdateProgressBar(){
 	var tmp=document.getElementById("FPFRemainingSystems");
-	if(tmp) tmp.innerHTML = getSystemDistance(currentSystem.galaxy, currentSystem.system, searchRequest.leftGalaxy, searchRequest.rightGalaxy);
+	if(tmp) tmp.innerHTML = getSystemDistance(currentSystem.galaxy, currentSystem.system, searchRequest.rightGalaxy, searchRequest.rightSystem);
 }
 function FPFSearchFinished(result){
 	document.getElementById("FPFLoadingImg").style.display='none';
@@ -347,7 +348,8 @@ function ParseTxt(galaxy, solar, txt){
 			}
 	}
 
-	printSolarSystem();	
+	if (searchResults.indexOf(true) != -1)
+		printSolarSystem();	
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function printSolarSystem() {

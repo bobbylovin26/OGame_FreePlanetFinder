@@ -13,6 +13,6 @@
    "name": "OGame Free Planet Finder Extension",
    "permissions": [ "http://oge.i4app.com/*" ],
    "update_url": "http://clients2.google.com/service/update2/crx",
-   "version": "0.3",
+   "version": "0.3.1",
    "web_accessible_resources": [ "*" ]
 }
