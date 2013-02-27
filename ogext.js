@@ -40,11 +40,11 @@ function GalaxyViewInjection(){
 	var HTMLForm = '<form class="FPF_form">'
 		+ 'Search solar systems from ' 
 		//TODO get input id = galaxy_input to read the checkIntInput(,,)
-		+ '<input type="text" id="FPF_leftGalaxy" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 10)">'
-		+ '<input type="text" id="FPF_leftSS" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 499)">'
+		+ '<input type="text" id="FPF_leftGalaxy" class="FPFSmallNumberInput" value="1">'
+		+ '<input type="text" id="FPF_leftSS" class="FPFSmallNumberInput" value="1">'
 		+ 'to'
-		+ '<input type="text" id="FPF_rightGalaxy" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 10)">'
-		+ '<input type="text" id="FPF_rightSS" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 499)">'
+		+ '<input type="text" id="FPF_rightGalaxy" class="FPFSmallNumberInput" value="1">'
+		+ '<input type="text" id="FPF_rightSS" class="FPFSmallNumberInput" value="1">'
 		+ '<br/>'
 		+ 'Search positions from'
 		+ '<input type="text" id="FPF_closePosition" class="FPFSmallNumberInput" value="1" onkeyup="checkIntInput(this, 1, 15)">'
@@ -71,10 +71,111 @@ function GalaxyViewInjection(){
 
 	document.getElementById("inhalt").appendChild(extDiv);
 
-	var button = document.getElementById('FPF_searchFreePlanetButton');
+	//var button = document.getElementById('FPF_searchFreePlanetButton');
 	document.getElementById('FPF_searchFreePlanetButton').style.backgroundImage = 'url("'+ chrome.extension.getURL('ressources/greenButton.png')+'")';
-
 	document.getElementById('FPF_searchFreePlanetButton').onclick = FPFSearchFreePlanetClicked;
+
+	setValueChangedListener(document.getElementById('FPF_leftGalaxy'), 1, 10);
+	setValueChangedListener(document.getElementById('FPF_rightGalaxy'), 1, 10);
+	setValueChangedListener(document.getElementById('FPF_leftSS'), 1, 499);
+	setValueChangedListener(document.getElementById('FPF_rightSS'), 1, 499);
+	setValueChangedListener(document.getElementById('FPF_closePosition'), 1, 15);
+	setValueChangedListener(document.getElementById('FPF_farPosition'), 1, 15);
+	/*document.getElementById('FPF_leftGalaxy').onkeyup = galaxyValueChanged;
+	document.getElementById('FPF_rightGalaxy').onkeyup = galaxyValueChanged;
+	document.getElementById('FPF_leftSS').onkeyup = systemValueChanged;
+	document.getElementById('FPF_rightSS').onkeyup = systemValueChanged;
+	document.getElementById('FPF_closePosition').onkeyup = positionValueChanged;
+	document.getElementById('FPF_farPosition').onkeyup = positionValueChanged;*/
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/*function galaxyValueChanged(sender) {
+	if (this.value == '') {
+		setSearchButtonEnabled(false);
+		return;
+	}
+	if (this.value < 1) 
+		this.value = 1;
+	if (this.value > 10)
+		this.value = 10;
+
+	setSearchButtonEnabled(shouldSetButtonEnabled());
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function systemValueChanged(sender) {
+	if (this.value == '') {
+		setSearchButtonEnabled(false);
+		return;
+	}
+	if (this.value < 1) 
+		this.value = 1;
+	if (this.value > 499)
+		this.value = 499;
+
+	setSearchButtonEnabled(shouldSetButtonEnabled());
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function positionValueChanged(sender) {
+	if (this.value == '') {
+		setSearchButtonEnabled(false);
+		return;
+	}
+	if (this.value < 1) 
+		this.value = 1;
+	if (this.value > 15)
+		this.value = 15;
+
+	setSearchButtonEnabled(shouldSetButtonEnabled());
+}*/
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function setValueChangedListener(anObject, minValue, maxValue) {
+	anObject.onkeyup = valueChanged;
+	anObject.minValue = minValue;
+	anObject.maxValue = maxValue;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function valueChanged(sender) {
+	if (this.value == '') {
+		setSearchButtonEnabled(false);
+		return;
+	}
+	if (this.value < this.minValue) 
+		this.value = this.minValue;
+	if (this.value > this.maxValue)
+		this.value = this.maxValue;
+
+	setSearchButtonEnabled(shouldSetButtonEnabled());
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function shouldSetButtonEnabled() {
+	console.log('getter');
+	var systemDistance = getSystemDistance(document.getElementById('FPF_leftGalaxy').value
+										,document.getElementById('FPF_leftSS').value
+										,document.getElementById('FPF_rightGalaxy').value
+										,document.getElementById('FPF_rightSS').value);
+	console.log(systemDistance);
+	if (systemDistance < 0) 
+		return false;
+
+	var positionDifference = document.getElementById('FPF_farPosition').value - document.getElementById('FPF_closePosition').value;
+	console.log(positionDifference);
+	if (positionDifference < 0)
+		return false;
+
+	return true;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function setSearchButtonEnabled(enabled) {
+	console.log('setter');
+	if (enabled) {
+		console.log('enable');
+		document.getElementById('FPF_searchFreePlanetButton').style.backgroundImage = 'url("'+ chrome.extension.getURL('ressources/greenButton.png')+'")';
+		document.getElementById('FPF_searchFreePlanetButton').onclick = FPFSearchFreePlanetClicked;
+	} else {
+		console.log('disable')
+		document.getElementById('FPF_searchFreePlanetButton').style.backgroundImage = 'url("'+ chrome.extension.getURL('ressources/greyButton.png')+'")';
+		document.getElementById('FPF_searchFreePlanetButton').onclick = null;
+	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function FPFSearchFreePlanetClicked() {
@@ -170,7 +271,7 @@ function FPFShouldContinue() {
 	return true;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-function getSystemRemainingCount() {
+/*function getSystemRemainingCount() {
 	//correct count when galaxies are differents
 	if (currentSystem.galaxy == searchRequest.rightGalaxy) {
 		return searchRequest.rightSystem - currentSystem.system;
@@ -178,6 +279,21 @@ function getSystemRemainingCount() {
 		return Math.max(0, searchRequest.rightGalaxy - currentSystem.galaxy - 1) * 499 
 				+ parseInt(500 - currentSystem.system, 10)
 				+ parseInt(searchRequest.rightSystem, 10);
+	}
+}*/
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function getSystemDistance(g1, s1, g2, s2) {
+	//correct count when galaxies are differents
+	if (g2 == g1) {
+		return s2 - s1;
+	} else if (g2 > g1) {
+		return Math.max(0, g2 - g1 - 1) * 499 
+				+ parseInt(500 - g1, 10)
+				+ parseInt(g2, 10);
+	} else {
+		return Math.min(0, g2 - g1 - 1) * 499 
+				+ parseInt(500 - g1, 10)
+				+ parseInt(g2, 10);
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,7 +313,7 @@ function DocumentLocationFullPathname(){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function UpdateProgressBar(){
 	var tmp=document.getElementById("FPFRemainingSystems");
-	if(tmp) tmp.innerHTML=getSystemRemainingCount();
+	if(tmp) tmp.innerHTML = getSystemDistance(currentSystem.galaxy, currentSystem.system, searchRequest.leftGalaxy, searchRequest.rightGalaxy);
 }
 function FPFSearchFinished(result){
 	document.getElementById("FPFLoadingImg").style.display='none';
