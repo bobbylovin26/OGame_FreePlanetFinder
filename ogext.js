@@ -43,7 +43,7 @@ if(document.location.href.indexOf('page=galaxy')!=-1){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
 	Inject the form into the galaxy view
-	Also activates a set a trigers on the form entries
+	Also activates a set a trigers on the form inputs
 */
 function GalaxyViewInjection(){	
 	var HTMLForm = '<form class="FPF_form">'
@@ -81,6 +81,15 @@ function GalaxyViewInjection(){
 	document.getElementById('FPF_searchFreePlanetButton').style.backgroundImage = 'url("'+ chrome.extension.getURL('ressources/greenButton.png')+'")';
 	document.getElementById('FPF_searchFreePlanetButton').onclick = FPFSearchFreePlanetClicked;
 
+	//inputs should be emptied on focus
+	document.getElementById('FPF_leftGalaxy').onfocus = inputGotFocus;
+	document.getElementById('FPF_rightGalaxy').onfocus = inputGotFocus;
+	document.getElementById('FPF_leftSS').onfocus = inputGotFocus;
+	document.getElementById('FPF_rightSS').onfocus = inputGotFocus;
+	document.getElementById('FPF_closePosition').onfocus = inputGotFocus;
+	document.getElementById('FPF_farPosition').onfocus = inputGotFocus;
+
+	//inputs should be controled on key up
 	setValueChangedListener(document.getElementById('FPF_leftGalaxy'), 1, getGalaxyMaxNumber());
 	setValueChangedListener(document.getElementById('FPF_rightGalaxy'), 1, getGalaxyMaxNumber());
 	setValueChangedListener(document.getElementById('FPF_leftSS'), 1, getSystemMaxNumber());
@@ -124,8 +133,8 @@ function getSystemMaxNumber() {
 	minValue ad maxValue
 
 	anObject: the text input element on which the trigger is to be set
-	minValue: (int) the minimum value that the entry should accept
-	maxValue: (int) the maximum value that the entry should accept
+	minValue: (int) the minimum value that the input should accept
+	maxValue: (int) the maximum value that the input should accept
 */
 function setValueChangedListener(anObject, minValue, maxValue) {
 	anObject.onkeyup = valueChanged;
@@ -156,9 +165,28 @@ function valueChanged(sender) {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
+	function to be triggered when a text input is focused
+	clears an input
+*/
+function inputGotFocus() {
+	this.value = '';
+	setSearchButtonEnabled(false);
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
 	return true if the search button should be enabled, false otherwise
 */
 function shouldSetButtonEnabled() {
+	//no input should be empty
+	if (document.getElementById('FPF_leftGalaxy') == ''
+			|| document.getElementById('FPF_rightGalaxy') == ''
+			|| document.getElementById('FPF_leftSS') == ''
+			|| document.getElementById('FPF_rightSS') == ''
+			|| document.getElementById('FPF_closePosition') == ''
+			|| document.getElementById('FPF_farPosition') == '')
+		return false;
+
+	//the left system should be lefter than the right system
 	var systemDistance = getSystemDistance(document.getElementById('FPF_leftGalaxy').value
 										,document.getElementById('FPF_leftSS').value
 										,document.getElementById('FPF_rightGalaxy').value
@@ -166,6 +194,7 @@ function shouldSetButtonEnabled() {
 	if (systemDistance < 0) 
 		return false;
 
+	// the closest position should be closed to the sun than the further position
 	var positionDifference = document.getElementById('FPF_farPosition').value - document.getElementById('FPF_closePosition').value;
 	if (positionDifference < 0)
 		return false;
@@ -188,7 +217,7 @@ function setSearchButtonEnabled(enabled) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
 	To be launched when the user clicks on the search button.
-	Reads the form entries, injects the search result view and lauches the searching process
+	Reads the form inputs, injects the search result view and lauches the searching process
 */
 function FPFSearchFreePlanetClicked() {
 	slots=parseInt(document.getElementById('slotValue').childNodes[2].nodeValue.match(/\d+/));
@@ -307,12 +336,12 @@ function getSystemDistance(g1, s1, g2, s2) {
 		return s2 - s1;
 	} else if (g2 > g1) {
 		return Math.max(0, g2 - g1 - 1) * 499 
-				+ parseInt(500 - g1, 10)
-				+ parseInt(g2, 10);
-	} else {
-		return Math.min(0, g2 - g1 - 1) * 499 
-				+ parseInt(500 - g1, 10)
-				+ parseInt(g2, 10);
+				+ parseInt(500 - s1, 10)
+				+ parseInt(s2, 10);
+	} else { //g1 > g2
+		return Math.max(0, g1 - g2 - 1) * 499 
+				+ parseInt(500 - s2, 10)
+				+ parseInt(s1, 10);
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
