@@ -3,8 +3,9 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
 TODO:
-	remove all unused objects
-	TODO: keep slots used updated when sending a ship
+	get the limit galaxy when openning the page
+	keep slots used updated when sending a ship
+	seperate private and pulic functions
 */
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,6 +21,7 @@ TODO:
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Info('ITP OGame Free Planet Finder Extension [LOADED]');
+getSystemMaxNumber();
 
 /// GLOBALS ///
 var stripe=true;							// used to give different colors to rows
@@ -48,7 +50,7 @@ function GalaxyViewInjection(){
 	var HTMLForm = '<form class="FPF_form">'
 		+ 'Search solar systems from ' 
 		//TODO get input id = galaxy_input to read the checkIntInput(,,)
-		+ '<input type="text" id="FPF_leftGalaxy" class="FPFSmallNumberInput" value="1">'
+		+ '<input type="text" id="FPF_leftGalaxy" pattern="[0-9]*" size="3" class="FPFSmallNumberInput" value="1">'
 		+ '<input type="text" id="FPF_leftSS" class="FPFSmallNumberInput" value="1">'
 		+ 'to'
 		+ '<input type="text" id="FPF_rightGalaxy" class="FPFSmallNumberInput" value="1">'
@@ -83,12 +85,47 @@ function GalaxyViewInjection(){
 	document.getElementById('FPF_searchFreePlanetButton').style.backgroundImage = 'url("'+ chrome.extension.getURL('ressources/greenButton.png')+'")';
 	document.getElementById('FPF_searchFreePlanetButton').onclick = FPFSearchFreePlanetClicked;
 
-	setValueChangedListener(document.getElementById('FPF_leftGalaxy'), 1, 10);
-	setValueChangedListener(document.getElementById('FPF_rightGalaxy'), 1, 10);
-	setValueChangedListener(document.getElementById('FPF_leftSS'), 1, 499);
-	setValueChangedListener(document.getElementById('FPF_rightSS'), 1, 499);
+	copyInputAttributs(document.getElementById('FPF_leftGalaxy'), document.getElementById('galaxy_input'));
+	copyInputAttributs(document.getElementById('FPF_rightGalaxy'), document.getElementById('galaxy_input'));
+	copyInputAttributs(document.getElementById('FPF_leftSS'), document.getElementById('system_input'));
+	copyInputAttributs(document.getElementById('FPF_rightSS'), document.getElementById('system_input'));
+	//copyInputAttributs(document.getElementById('FPF_closePosition'), 1, 15);
+	//copyInputAttributs(document.getElementById('FPF_farPosition'), 1, 15);
+
+	setValueChangedListener(document.getElementById('FPF_leftGalaxy'), 1, getGalaxyMaxNumber());
+	setValueChangedListener(document.getElementById('FPF_rightGalaxy'), 1, getGalaxyMaxNumber());
+	setValueChangedListener(document.getElementById('FPF_leftSS'), 1, getSystemMaxNumber());
+	setValueChangedListener(document.getElementById('FPF_rightSS'), 1, getSystemMaxNumber());
 	setValueChangedListener(document.getElementById('FPF_closePosition'), 1, 15);
 	setValueChangedListener(document.getElementById('FPF_farPosition'), 1, 15);
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	PRIVATE
+
+	returns the maximum galaxy number in this universe
+*/
+function getGalaxyMaxNumber() {
+	var t = document.getElementById('galaxy_input').getAttribute('onkeyup').match(/\d+/g);
+
+	return parseInt(t[1], 10);
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	PRIVATE
+
+	returns the maximum solar system number in this universe
+*/
+function getSystemMaxNumber() {
+	var t = document.getElementById('system_input').getAttribute('onkeyup').match(/\d+/g);
+
+	return parseInt(t[1], 0);
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function copyInputAttributs(myInput, ogameInput) {
+	myInput.maxLength = ogameInput.maxLength;
+	myInput.pattern = ogameInput.pattern;
+	myInput.size = ogameInput.size;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -113,6 +150,9 @@ function setValueChangedListener(anObject, minValue, maxValue) {
 	This trigger is to be set with setValueChangedListener(anObject, minValue, maxValue)
 */
 function valueChanged(sender) {
+	//keep only numbers
+	this.value = this.value.replace(/\D+/, '');
+
 	if (this.value == '') {
 		setSearchButtonEnabled(false);
 		return;
