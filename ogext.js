@@ -24,8 +24,6 @@ var currentSystem;
 var searchResults = new Array();
 var sendingFleet = null;
 var stripe = true;
-/*searchResults.push(undefined);
-for (var i = 1 ; i < 16 ; i++) {searchResults.push(false);}*/
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 var moduleDomId='OGame Free Planet Finder Extension';
 IsModuleLoaded(moduleDomId,true);
@@ -81,52 +79,7 @@ function GalaxyViewInjection(){
 	setValueChangedListener(document.getElementById('FPF_rightSS'), 1, 499);
 	setValueChangedListener(document.getElementById('FPF_closePosition'), 1, 15);
 	setValueChangedListener(document.getElementById('FPF_farPosition'), 1, 15);
-	/*document.getElementById('FPF_leftGalaxy').onkeyup = galaxyValueChanged;
-	document.getElementById('FPF_rightGalaxy').onkeyup = galaxyValueChanged;
-	document.getElementById('FPF_leftSS').onkeyup = systemValueChanged;
-	document.getElementById('FPF_rightSS').onkeyup = systemValueChanged;
-	document.getElementById('FPF_closePosition').onkeyup = positionValueChanged;
-	document.getElementById('FPF_farPosition').onkeyup = positionValueChanged;*/
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-/*function galaxyValueChanged(sender) {
-	if (this.value == '') {
-		setSearchButtonEnabled(false);
-		return;
-	}
-	if (this.value < 1) 
-		this.value = 1;
-	if (this.value > 10)
-		this.value = 10;
-
-	setSearchButtonEnabled(shouldSetButtonEnabled());
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function systemValueChanged(sender) {
-	if (this.value == '') {
-		setSearchButtonEnabled(false);
-		return;
-	}
-	if (this.value < 1) 
-		this.value = 1;
-	if (this.value > 499)
-		this.value = 499;
-
-	setSearchButtonEnabled(shouldSetButtonEnabled());
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-function positionValueChanged(sender) {
-	if (this.value == '') {
-		setSearchButtonEnabled(false);
-		return;
-	}
-	if (this.value < 1) 
-		this.value = 1;
-	if (this.value > 15)
-		this.value = 15;
-
-	setSearchButtonEnabled(shouldSetButtonEnabled());
-}*/
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function setValueChangedListener(anObject, minValue, maxValue) {
 	anObject.onkeyup = valueChanged;
@@ -271,17 +224,6 @@ function FPFShouldContinue() {
 
 	return true;
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-/*function getSystemRemainingCount() {
-	//correct count when galaxies are differents
-	if (currentSystem.galaxy == searchRequest.rightGalaxy) {
-		return searchRequest.rightSystem - currentSystem.system;
-	} else {
-		return Math.max(0, searchRequest.rightGalaxy - currentSystem.galaxy - 1) * 499 
-				+ parseInt(500 - currentSystem.system, 10)
-				+ parseInt(searchRequest.rightSystem, 10);
-	}
-}*/
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function getSystemDistance(g1, s1, g2, s2) {
 	//correct count when galaxies are differents
@@ -445,23 +387,14 @@ function SendColonyShip(response) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function SendColonyShipsSuccess(){
 	sendingFleet.img.src = chrome.extension.getURL('ressources/colonisationSuccess.png');
-	//PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){}); ???
 
 	sendingFleet = null;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function SendColonyShipsFailed(){
 	sendingFleet.img.src = chrome.extension.getURL('ressources/colonisationFail.png');
-	//PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){}); ???
 
 	sendingFleet = null;
-
-	/*sendingFleet.img.src=chrome.extension.getURL('recycle-red.gif');
-	sendingFleet.img.onclick=sendingFleet.imgOnClick;
-	sendingFleet.img.style.cursor=sendingFleet.imgStyleCursor;
-	sendingFleet.img.title=sendingFleet.imgTitle;
-	sendingFleet=null;*/
-	//Info('SendRecyclersFailed');	
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function getElementByIdInFragment(fragment, id) {
