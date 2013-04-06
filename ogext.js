@@ -4,7 +4,16 @@
 /**
 TODO:
 	remove all unused objects
-
+	TODO: keep slots used updated when sending a ship
+*/
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	This is the main file of the chrome extension.
+	This adds a form to the galaxy view on the onligne game ogame (see ogame.*)
+	One the form is filled, the user can scan his univers and the extensions indicated free planets
+	that are ready to be colonised
 */
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13,17 +22,14 @@ TODO:
 Info('ITP OGame Free Planet Finder Extension [LOADED]');
 
 /// GLOBALS ///
-var stripe=true;
-var ogeDictionary=new Array;
-var colonyShipsAvailable = false;
-var slots;
-var slotsUsed;
-var sendingFleet=null;
-var searchRequest;
-var currentSystem;
-var searchResults = new Array();
-var sendingFleet = null;
-var stripe = true;
+var stripe=true;							// used to give different colors to rows
+var colonyShipsAvailable = false;			// true if the player has any colony ship available on the current planet
+var slots;									// number of fleet slots the user is allowed to
+var slotsUsed;								// number of fleet slots the user is using
+var sendingFleet=null;						// informations about the fleet being sent (null if no fleet is being sent)
+var searchRequest;							// the limit solar systems and positions to be searched
+var currentSystem;							// current system being scanned
+var searchResults = new Array();			// results of a solar system scan
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 var moduleDomId='OGame Free Planet Finder Extension';
 IsModuleLoaded(moduleDomId,true);
@@ -34,6 +40,10 @@ if(document.location.href.indexOf('page=galaxy')!=-1){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Inject the form into the galaxy view
+	Also activates a set a trigers on the form entries
+*/
 function GalaxyViewInjection(){	
 	var HTMLForm = '<form class="FPF_form">'
 		+ 'Search solar systems from ' 
@@ -81,12 +91,27 @@ function GalaxyViewInjection(){
 	setValueChangedListener(document.getElementById('FPF_farPosition'), 1, 15);
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	General setter for the function valueChanged
+	To be used an a text input. The function will check that the value the user enter is between
+	minValue ad maxValue
+
+	anObject: the text input element on which the trigger is to be set
+	minValue: (int) the minimum value that the entry should accept
+	maxValue: (int) the maximum value that the entry should accept
+*/
 function setValueChangedListener(anObject, minValue, maxValue) {
 	anObject.onkeyup = valueChanged;
 	anObject.minValue = minValue;
 	anObject.maxValue = maxValue;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	PRIVATE FUNCTION
+
+	A function that check if the sender value is between a min and a max value.
+	This trigger is to be set with setValueChangedListener(anObject, minValue, maxValue)
+*/
 function valueChanged(sender) {
 	if (this.value == '') {
 		setSearchButtonEnabled(false);
@@ -100,43 +125,44 @@ function valueChanged(sender) {
 	setSearchButtonEnabled(shouldSetButtonEnabled());
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	return true if the search button should be enabled, false otherwise
+*/
 function shouldSetButtonEnabled() {
-	console.log('getter');
 	var systemDistance = getSystemDistance(document.getElementById('FPF_leftGalaxy').value
 										,document.getElementById('FPF_leftSS').value
 										,document.getElementById('FPF_rightGalaxy').value
 										,document.getElementById('FPF_rightSS').value);
-	console.log(systemDistance);
 	if (systemDistance < 0) 
 		return false;
 
 	var positionDifference = document.getElementById('FPF_farPosition').value - document.getElementById('FPF_closePosition').value;
-	console.log(positionDifference);
 	if (positionDifference < 0)
 		return false;
 
 	return true;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Sets the search button to enabled
+*/
 function setSearchButtonEnabled(enabled) {
-	console.log('setter');
 	if (enabled) {
-		console.log('enable');
 		document.getElementById('FPF_searchFreePlanetButton').style.backgroundImage = 'url("'+ chrome.extension.getURL('ressources/greenButton.png')+'")';
 		document.getElementById('FPF_searchFreePlanetButton').onclick = FPFSearchFreePlanetClicked;
 	} else {
-		console.log('disable')
 		document.getElementById('FPF_searchFreePlanetButton').style.backgroundImage = 'url("'+ chrome.extension.getURL('ressources/greyButton.png')+'")';
 		document.getElementById('FPF_searchFreePlanetButton').onclick = null;
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	To be launched when the user clicks on the search button.
+	Reads the form entries, injects the search result view and lauches the searching process
+*/
 function FPFSearchFreePlanetClicked() {
 	slots=parseInt(document.getElementById('slotValue').childNodes[2].nodeValue.match(/\d+/));
 	slotsUsed=parseInt(document.getElementById('slotUsed').innerHTML);
-
-	console.log('slots: '+slots);
-	console.log('slots used: '+slotsUsed);
 
 	searchRequest = new Object();
 	searchRequest.leftGalaxy = document.getElementById('FPF_leftGalaxy').value;
@@ -158,6 +184,9 @@ function FPFSearchFreePlanetClicked() {
 	FPFSearch('');
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Removes the current views and inject the results view instead
+*/
 function injectFPFView() {
 	var coordsStr=document.getElementById("galaxyheadbg2").childNodes[1].innerHTML; //Planeta
 	colonyShipsAvailable = (document.getElementsByClassName('tooltip planetMoveIcons colonize-active icon').length > 0);
@@ -190,6 +219,9 @@ function injectFPFView() {
 	document.getElementById("inhalt").innerHTML=innerHTML;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Updates the progress bar, prints the positive results and launches the next system search (if there is any)
+*/
 function FPFSearch(txt){
 	if(txt!=''){
 		UpdateProgressBar();
@@ -205,6 +237,9 @@ function FPFSearch(txt){
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Increments the global variable representing the system currently being scanned
+*/
 function incrementCurrentSystem() {
 	if (currentSystem.system == 499) {
 		currentSystem.galaxy++;
@@ -214,6 +249,9 @@ function incrementCurrentSystem() {
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Returns true if there is still solar system to be scanned, false otherwise
+*/
 function FPFShouldContinue() {
 	if (parseInt(currentSystem.galaxy, 10) > parseInt(searchRequest.rightGalaxy, 10)) { //had to add parseInt for the chrome not to think it's a string...
 		return false;
@@ -225,6 +263,14 @@ function FPFShouldContinue() {
 	return true;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	returns the number of solar systems between two given coordinates
+
+	g1: the first system galaxy number
+	s1: the first system system number
+	g2: the second system galaxy number
+	s2: the second system system number
+*/
 function getSystemDistance(g1, s1, g2, s2) {
 	//correct count when galaxies are differents
 	if (g2 == g1) {
@@ -240,6 +286,9 @@ function getSystemDistance(g1, s1, g2, s2) {
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Launches a system scan
+*/
 function FPFSearchCanLoad(txt){
 	eval('var r=new Object('+txt+')');
 	if(r.status){
@@ -250,23 +299,36 @@ function FPFSearchCanLoad(txt){
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	TODO: comment
+*/
 function DocumentLocationFullPathname(){
 	return document.location.protocol+'//'+document.location.host+document.location.pathname;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Updates the progress bar
+*/
 function UpdateProgressBar(){
 	var tmp=document.getElementById("FPFRemainingSystems");
 	if(tmp) tmp.innerHTML = getSystemDistance(currentSystem.galaxy, currentSystem.system, searchRequest.rightGalaxy, searchRequest.rightSystem);
 }
+/**
+	Launched when all system have been scanned.
+	Hides the progress bar and prints 'Free Planet Finder' instead
+*/
 function FPFSearchFinished(result){
 	document.getElementById("FPFLoadingImg").style.display='none';
 	document.getElementById("FPFRemainingSystems").innerHTML='Free Planet Finder';
 	if(result=='error'){
-		//Info('DFFSearchFinished with error GALAXY CANNOT BE LOAD /deuter/');
 		FPFError();
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Launched when an error happens
+	Prints an error message
+*/
 function FPFError(){
 	var errorMessage=SmartCut(document.body.innerHTML,['case 613',"'"],"'"); //deuterium needed
 	var row=document.createElement("tr");
@@ -275,6 +337,16 @@ function FPFError(){
 	document.getElementById("ogeDFFTable").appendChild(row);
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Scans the system data on txt (HTML),
+	fills searchResults indexes with true if the position is empty, false otherwise
+
+	Prints the positive results
+
+	galaxy: the galaxy number of the txt to be parsed
+	solar: the solar system number of the txt to be parsed
+	txt: the HTML text to be parsed
+*/
 function ParseTxt(galaxy, solar, txt){
 	var t = document.createElement('div');
 	t.innerHTML = txt;
@@ -285,7 +357,6 @@ function ParseTxt(galaxy, solar, txt){
 	if (galaxyTable != null) {
 		var tbody = galaxyTable.querySelector('tbody');
 			for (var p = parseInt(searchRequest.closePosition, 10) ; p <= searchRequest.farPosition ; p++) {
-				//console.log(tbody.childNodes[2*p + 1]); //TODO can you do that using jquery?
 				searchResults[p] = (tbody.childNodes[2*(p-1) + 1].querySelector('.' + 'planetname' ) == null);
 			}
 	}
@@ -294,6 +365,11 @@ function ParseTxt(galaxy, solar, txt){
 		printSolarSystem();	
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Injects a row in the results table
+	The row indicated the solar system and images on the free plantes.
+	The images are buttons if the user has any available colony ship
+*/
 function printSolarSystem() {
 	var row=document.createElement("tr");
 	HTMLTableRow = ''
@@ -332,6 +408,12 @@ function printSolarSystem() {
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Trigger launched when the user clicks on a button in order to launch a colony ship
+	Launches the colony ship at the clicked coordinates
+
+	sender: the button that have been clicked 
+*/
 function FPFSendColoShipClicked(sender) {
 	if (sendingFleet == null) {
 		sendingFleet = new Object();
@@ -346,6 +428,14 @@ function FPFSendColoShipClicked(sender) {
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Callback function when sending a colony ship
+
+	Launch the next step of the sending if any.
+	Shows succes or error if any.
+
+	response: the response the function recieved from the server
+*/
 function SendColonyShip(response) {
 	var txt=SmartCut(response,'<body id="','"');
 	var gsp='galaxy='+sendingFleet.galaxyDest+'&system='+sendingFleet.systemDest+'&position='+sendingFleet.planetDest; // target???
@@ -385,18 +475,30 @@ function SendColonyShip(response) {
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Changes the launching icon to a other icon indicating succes
+*/
 function SendColonyShipsSuccess(){
 	sendingFleet.img.src = chrome.extension.getURL('ressources/colonisationSuccess.png');
 
 	sendingFleet = null;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Changes the launching icon to a other icon indicating failure
+*/
 function SendColonyShipsFailed(){
 	sendingFleet.img.src = chrome.extension.getURL('ressources/colonisationFail.png');
 
 	sendingFleet = null;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	returns an element with the id id from the fragment fragment.
+
+	fragment: the fragment to be searched
+	id: the id you to search for
+*/
 function getElementByIdInFragment(fragment, id) {
     if (fragment.querySelector) {
         return fragment.querySelector('#' + id);
@@ -405,6 +507,11 @@ function getElementByIdInFragment(fragment, id) {
     }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Prints text in the console
+
+	text a string or a table to be printed in the console
+*/
 function Info(text){
 	var txt="";
 	for( var i = 0; i < arguments.length; i++ ) txt+=arguments[i];
