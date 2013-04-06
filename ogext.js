@@ -3,8 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
 TODO:
-	get the limit galaxy when openning the page
-	keep slots used updated when sending a ship
+	keep used slots updated when sending a ship
 	seperate private and pulic functions
 */
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +48,6 @@ if(document.location.href.indexOf('page=galaxy')!=-1){
 function GalaxyViewInjection(){	
 	var HTMLForm = '<form class="FPF_form">'
 		+ 'Search solar systems from ' 
-		//TODO get input id = galaxy_input to read the checkIntInput(,,)
 		+ '<input type="text" id="FPF_leftGalaxy" pattern="[0-9]*" size="3" class="FPFSmallNumberInput" value="1">'
 		+ '<input type="text" id="FPF_leftSS" class="FPFSmallNumberInput" value="1">'
 		+ 'to'
@@ -64,7 +62,6 @@ function GalaxyViewInjection(){
 		+ '<a id="FPF_searchFreePlanetButton" class="FPFLaunchButton" style="background-image: url('+chrome.extension.getURL('ressources/greenButton.png')+'"")>Search</a>'
 		+ '</form>';
 
-	//TODO: correct this bloc
 	var innerHTML = ''
 		+ '<div style="text-align:center;background:url('+chrome.extension.getURL('ressources/newsboxheader.gif')+') no-repeat;height:30px;">'
 		+ '<span class="ogeBoxTitle">'+'Free Planete Finder'+'</span>'
@@ -81,16 +78,8 @@ function GalaxyViewInjection(){
 
 	document.getElementById("inhalt").appendChild(extDiv);
 
-	//var button = document.getElementById('FPF_searchFreePlanetButton');
 	document.getElementById('FPF_searchFreePlanetButton').style.backgroundImage = 'url("'+ chrome.extension.getURL('ressources/greenButton.png')+'")';
 	document.getElementById('FPF_searchFreePlanetButton').onclick = FPFSearchFreePlanetClicked;
-
-	copyInputAttributs(document.getElementById('FPF_leftGalaxy'), document.getElementById('galaxy_input'));
-	copyInputAttributs(document.getElementById('FPF_rightGalaxy'), document.getElementById('galaxy_input'));
-	copyInputAttributs(document.getElementById('FPF_leftSS'), document.getElementById('system_input'));
-	copyInputAttributs(document.getElementById('FPF_rightSS'), document.getElementById('system_input'));
-	//copyInputAttributs(document.getElementById('FPF_closePosition'), 1, 15);
-	//copyInputAttributs(document.getElementById('FPF_farPosition'), 1, 15);
 
 	setValueChangedListener(document.getElementById('FPF_leftGalaxy'), 1, getGalaxyMaxNumber());
 	setValueChangedListener(document.getElementById('FPF_rightGalaxy'), 1, getGalaxyMaxNumber());
@@ -122,11 +111,12 @@ function getSystemMaxNumber() {
 	return parseInt(t[1], 0);
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-function copyInputAttributs(myInput, ogameInput) {
+// deprecated
+/*function copyInputAttributs(myInput, ogameInput) {
 	myInput.maxLength = ogameInput.maxLength;
 	myInput.pattern = ogameInput.pattern;
 	myInput.size = ogameInput.size;
-}
+}*/
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
 	General setter for the function valueChanged
